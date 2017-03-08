@@ -9,12 +9,33 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <string.h>
+#include <map>
 #include <iostream>
+#include <cassert>
 
 #define DEFAULT_PORT 0 // port with #0 will be assigned to next available port.
 #define MULTIPLEX 5 //5 connections at max
 
 using namespace std;
+
+class procedure {
+    char * name;
+    int * argtypes;
+    void ** args;
+};
+
+class location {
+    string ip;
+    int port;
+};
+
+//database for procedures (procedure signature, location)
+std::map<procedure, location> database;
+
+//thread for connection to client/server
+void read(){
+    
+}
 
 //This binder is the first thing to run
 int main(){
@@ -51,6 +72,8 @@ int main(){
         cout << "SERVER_ADDRESS " << hostname << endl;
         cout << "SERVER_PORT " << ntohs(server_address.sin_port) << endl;
     }
+    
+    //
     
     return 0;
 }

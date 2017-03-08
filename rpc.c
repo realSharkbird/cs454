@@ -1,29 +1,12 @@
 #include "rpc.h"
 #include <thread>
 #include <sys/socket.h>
-#include <map>
-#include <iostream>
-#include <cassert>
 
 const static int SUCCESS = 0;
 const static int ERROR = -1;
 const static int WARNING = 1;
 
 using namespace std;
-
-class procedure {
-    char * name;
-    int * argtypes;
-    void ** args;
-};
-
-class location {
-    string ip;
-    int port;
-};
-
-//database for procedures (procedure signature, location)
-std::map<procedure, location> database;
 
 //thread for connection to clients
 void readClient(){

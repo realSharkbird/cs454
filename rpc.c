@@ -1,14 +1,40 @@
 #include "rpc.h"
+#include <thread>
+#include <sys/socket.h>
+#include <map>
+#include <iostream>
+#include <cassert>
+
+const static int SUCCESS = 0;
+const static int ERROR = -1;
+const static int WARNING = 1;
+
+//database for procedures (procedure signature, location)
+std::map<std::string, int> m;
+
+//thread for connection to clients
+void readClient(){
+    
+}
+
+//thread for connection to the binder
+void readBinder(){
+    
+}
 
 //first called by server
 int rpcInit(){
     
     //create a connection socket for accepting connections from clients
+    std::thread t1(readClient);
     
     //Open a connection to the binder
-  
-    //Note: Create 2 threads here
+    std::thread t2(readBinder);
+
+    t1.join();
+    t2.join();
     
+    return SUCCESS;
 };
 
 //2nd function called by server
@@ -18,6 +44,7 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
     
     //Make an entry in a local database, associating the server skeleton with the name and list of argument types.
     
+    return SUCCESS;
 };
 
 //3rd function called by server
@@ -31,6 +58,7 @@ int rpcExecute(){
     //Send back procedure result (eg. success fail)
     //Send back modified arg values
     
+    return SUCCESS;
 };
 
 //called by client

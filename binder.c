@@ -1,3 +1,6 @@
+//NOTE: I used some of this code from my assignment #2.
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -13,6 +16,7 @@
 
 using namespace std;
 
+//This binder is the first thing to run
 int main(){
     
     //define socket variables
@@ -30,8 +34,7 @@ int main(){
     server_address.sin_family = AF_INET;
     server_address.sin_addr.s_addr = INADDR_ANY;
     server_address.sin_port = htons(DEFAULT_PORT);
-    if (bind(socketDescriptor, (struct sockaddr *) &server_address,
-             sizeof(server_address)) < 0)
+    if (bind(socketDescriptor, (struct sockaddr *) &server_address, sizeof(server_address)) < 0)
         cout << "error on binding" << endl;
     listen(socketDescriptor,MULTIPLEX);
     clientLen = sizeof(server_address);

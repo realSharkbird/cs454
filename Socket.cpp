@@ -1,5 +1,5 @@
 /*
- * Custom socket class to make code look cleaner and less repetitive.
+ * Custom socket class to make sockets easier to use.
  * NOTE: I used some of this code from my assignment #2.
  */
 
@@ -20,6 +20,7 @@
 
 using namespace std;
 
+//create the socket. Assignment next available port #.
 Socket::Socket(){
     //setup sockets and stuff
     bzero((char *) &client_address, sizeof(client_address));
@@ -31,7 +32,7 @@ Socket::Socket(){
     client_address.sin_port = htons(DEFAULT_PORT);
 }
 
-void Socket::printLocation(string endpointName){
+void Socket::printLocation(string locationName){
     
     if (::bind(socketDescriptor, (struct sockaddr *) &client_address,
              sizeof(client_address)) < 0)
@@ -48,11 +49,12 @@ void Socket::printLocation(string endpointName){
         char hostname[1024];
         gethostname(hostname, 1024);
         
-        cout << endpointName << "_ADDRESS " << hostname << endl;
-        cout << endpointName << "_PORT " << ntohs(client_address.sin_port) << endl;
+        cout << locationName << "_ADDRESS " << hostname << endl;
+        cout << locationName << "_PORT " << ntohs(client_address.sin_port) << endl;
     }
 }
 
+//listen for a message
 string Socket::readMessage(){
     
     //wait for requests
@@ -69,6 +71,7 @@ string Socket::readMessage(){
     return buffer;
 }
 
+//send a message to specified location
 void Socket::writeMessage(string message, string address, string port){
     
     //variables

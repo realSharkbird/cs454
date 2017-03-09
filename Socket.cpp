@@ -55,12 +55,6 @@ void Socket::printLocation(string endpointName){
 
 string Socket::readMessage(){
     
-    if (::bind(socketDescriptor, (struct sockaddr *) &server_address,
-               sizeof(server_address)) < 0)
-        cout << "error on binding" << endl;
-    listen(socketDescriptor,MULTIPLEX);
-    serverLen = sizeof(server_address);
-    
     //wait for requests
     serverLen = sizeof(server_address);
     newsocketDescriptor = accept(socketDescriptor, (struct sockaddr *) &server_address, &serverLen);
@@ -71,9 +65,6 @@ string Socket::readMessage(){
     bzero(buffer,256);
     n = read(newsocketDescriptor,buffer,255);
     if (n < 0) cout << "error reading from socket" << endl;
-    
-    //print string received from server
-    cout << buffer;
     
     return buffer;
 }

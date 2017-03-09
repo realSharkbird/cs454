@@ -41,12 +41,12 @@ int main(){
     //listen for requests
     while(true){
     
-        //string message = s->readMessage();
+        string message = s->readMessage();
         
         //determine if message from client or server
         
         //server registration request
-        //cout << "registered message: " << message << endl;
+        cout << "registered message: " << message << endl;
     }
     
     return 0;

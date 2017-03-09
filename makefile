@@ -7,4 +7,4 @@ server : server.c
 	g++ -L. rpc.c server.c server_functions.c server_function_skels.c -stdlib=libc++ -std=c++0x -lpthread -o server
 
 binder : binder.c
-	g++ binder.c -std=c++0x -lpthread -o binder
+	g++ binder.c -stdlib=libc++ -lpthread -o binder

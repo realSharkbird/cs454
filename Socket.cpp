@@ -21,48 +21,26 @@
 using namespace std;
 
 Socket::Socket(){
-    Socket(INADDR_ANY, DEFAULT_PORT);
-}
-
-Socket::Socket(int address, int port){
     //setup sockets and stuff
-
-    bzero((char *) &server_address, sizeof(server_address));
+    bzero((char *) &client_address, sizeof(client_address));
     socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
     if (socketDescriptor < 0)
         cout << "error opening socket" << endl;
-    server_address.sin_family = AF_INET;
-    server_address.sin_addr.s_addr = INADDR_ANY;
-    server_address.sin_port = htons(port);
-    if (::bind(socketDescriptor, (struct sockaddr *) &server_address, sizeof(server_address)) < 0)
-        cout << "error on binding" << endl;
-    listen(socketDescriptor,MULTIPLEX);
-    clientLen = sizeof(server_address);
+    client_address.sin_family = AF_INET;
+    client_address.sin_addr.s_addr = INADDR_ANY;
+    client_address.sin_port = htons(DEFAULT_PORT);
 }
 
-Socket::Socket(string address, string port){
-    //setup sockets and stuff
-    int portNum = atoi(port.c_str());
-    struct hostent *server = gethostbyname(address.c_str());
-
-    bzero((char *) &server_address, sizeof(server_address));
-    socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
-    if (socketDescriptor < 0)
-        cout << "error opening socket" << endl;
-    server_address.sin_family = AF_INET;
-    bcopy((char *)server->h_addr,
-          (char *)&server_address.sin_addr.s_addr,
-          server->h_length);
-    server_address.sin_port = htons(portNum);
-    if (::bind(socketDescriptor, (struct sockaddr *) &server_address, sizeof(server_address)) < 0)
+void Socket::printLocation(string endpointName){
+    
+    if (::bind(socketDescriptor, (struct sockaddr *) &client_address,
+             sizeof(client_address)) < 0)
         cout << "error on binding" << endl;
     listen(socketDescriptor,MULTIPLEX);
-    clientLen = sizeof(server_address);
-}
-
-void Socket::printLocation(){
+    clientLen = sizeof(client_address);
+    
     //print out server and port numbers
-    if (getsockname(socketDescriptor, (struct sockaddr *)&server_address, &clientLen) < 0){
+    if (getsockname(socketDescriptor, (struct sockaddr *)&client_address, &clientLen) < 0){
         cout << "failed to get hostname with errno: " << endl;
         exit(1);
     }else{
@@ -70,15 +48,22 @@ void Socket::printLocation(){
         char hostname[1024];
         gethostname(hostname, 1024);
         
-        cout << "SERVER_ADDRESS " << hostname << endl;
-        cout << "SERVER_PORT " << ntohs(server_address.sin_port) << endl;
+        cout << endpointName << "_ADDRESS " << hostname << endl;
+        cout << endpointName << "_PORT " << ntohs(client_address.sin_port) << endl;
     }
 }
 
 string Socket::readMessage(){
+    
+    if (::bind(socketDescriptor, (struct sockaddr *) &server_address,
+               sizeof(server_address)) < 0)
+        cout << "error on binding" << endl;
+    listen(socketDescriptor,MULTIPLEX);
+    serverLen = sizeof(server_address);
+    
     //wait for requests
-    clientLen = sizeof(client_address);
-    newsocketDescriptor = accept(socketDescriptor, (struct sockaddr *) &client_address, &clientLen);
+    serverLen = sizeof(server_address);
+    newsocketDescriptor = accept(socketDescriptor, (struct sockaddr *) &server_address, &serverLen);
     if (newsocketDescriptor < 0)
         cout << "error on accept" << endl;
     
@@ -93,12 +78,36 @@ string Socket::readMessage(){
     return buffer;
 }
 
-void Socket::writeMessage(string message){
+void Socket::writeMessage(string message, string address, string port){
     
-     //send requests from queue to server
-     n = write(socketDescriptor,message.c_str(),strlen(message.c_str()));
-     
-     if (n < 0)
-     cout << "error writing to socket" << endl;
+    //variables
+    int socketDescriptor, portNum, n;
+    struct sockaddr_in server_address;
+    struct hostent *server;
+    
+    //initialize sockets and stuff
+    bzero((char *) &server_address, sizeof(server_address));
+    socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
+    portNum = atoi(port.c_str());
+    if (socketDescriptor < 0)
+        cout << "error opening socket" << endl;
+    server = gethostbyname(address.c_str());
+    if (server == NULL) {
+        cout << "error, host doesnt exist" << endl;
+        exit(0);
+    }
+    
+    server_address.sin_family = AF_INET;
+    bcopy((char *)server->h_addr,
+          (char *)&server_address.sin_addr.s_addr,
+          server->h_length);
+    server_address.sin_port = htons(portNum);
+    if (connect(socketDescriptor,(struct sockaddr *) &server_address,sizeof(server_address)) < 0)
+        cout << "error connecting" << endl;
+        
+    //send requests from queue to server
+    n = write(socketDescriptor,message.c_str(),strlen(message.c_str()));
+    if (n < 0)
+        cout << "error writing to socket" << endl;
     
 }

@@ -47,15 +47,17 @@ int rpcInit(){
 //2nd function called by server
 int rpcRegister(char* name, int* argTypes, skeleton f){
     
-    //call the binder, inform it that a server procedure with the corresponding arguments are available at this server
+    cout << "sending register message" << endl;
     
     //get server address and port
     string SERVER_ADDRESS = getenv("SERVER_ADDRESS");
     string SERVER_PORT = getenv("SERVER_PORT");
     
     //create socket
-    Socket * s = new Socket(SERVER_ADDRESS, SERVER_PORT);
-    s->printLocation();
+    Socket * s = new Socket();
+
+    //call the binder, inform it that a server procedure with the corresponding arguments are available at this server
+    s->writeMessage("father", SERVER_ADDRESS, SERVER_PORT);
     
     //Make an entry in a local database, associating the server skeleton with the name and list of argument types.
     

@@ -1,10 +1,10 @@
 all: client1 server binder
 
 client1 : client1.c
-	g++ -L. rpc.c client1.c -stdlib=libc++ -std=c++0x -lpthread -o client
+	g++ -L. -w Socket.c rpc.c client1.c -stdlib=libc++ -std=c++0x -lpthread -o client
 
 server : server.c
-	g++ -L. rpc.c server.c server_functions.c server_function_skels.c -stdlib=libc++ -std=c++0x -lpthread -o server
+	g++ -L. -w Socket.c rpc.c server.c server_functions.c server_function_skels.c -stdlib=libc++ -std=c++0x -lpthread -o server
 
 binder : binder.c
-	g++ binder.c -stdlib=libc++ -lpthread -o binder
+	g++ Socket.c binder.c -w -stdlib=libc++ -std=c++0x -lpthread -o binder

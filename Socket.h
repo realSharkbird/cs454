@@ -5,7 +5,7 @@ class Socket{
     //declare socket variables
     int socketDescriptor, newsocketDescriptor;
     socklen_t clientLen, serverLen;
-    char buffer[256];
+    char buffer[65536];
     struct sockaddr_in server_address, client_address;
     int n;
     
@@ -14,7 +14,7 @@ public:
     Socket(int, int);
     Socket(std::string, std::string);
     void printLocation(std::string);
-    std::string readMessage();
-    void writeMessage(std::string, std::string, std::string);
+    void* readMessage();
+    void writeMessage(void*, std::string, std::string);
     
 };

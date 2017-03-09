@@ -11,6 +11,7 @@
 #include <iostream>
 #include <cassert>
 #include "Socket.h"
+#include "message.h"
 
 #define DEFAULT_PORT 0 // port with #0 will be assigned to next available port.
 #define MULTIPLEX 5 //5 connections at max
@@ -29,11 +30,14 @@ class location {
 };
 
 //database for procedures (procedure signature, location)
-std::map<procedure, location> database;
+std::map<procedure, location>* database;
 
 //This binder is the first thing to run
 int main(){
-        
+    
+    //variables
+    database = new std::map<procedure, location>();
+    
     //create socket
     Socket * s = new Socket();
     s->printLocation("BINDER");
@@ -41,12 +45,13 @@ int main(){
     //listen for requests
     while(true){
     
-        string message = s->readMessage();
+        Message* message = (Message*)(s->readMessage());
         
         //determine if message from client or server
-        
+        cout << "(debug) binder received message: " << message << endl;
+
         //server registration request
-        cout << "registered message: " << message << endl;
+        
     }
     
     return 0;

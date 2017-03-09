@@ -17,6 +17,7 @@
 #include <cassert>
 #include <netdb.h>
 #include "Socket.h"
+#include "message.h"
 
 using namespace std;
 
@@ -55,7 +56,7 @@ void Socket::printLocation(string locationName){
 }
 
 //listen for a message
-string Socket::readMessage(){
+void* Socket::readMessage(){
     
     //wait for requests
     serverLen = sizeof(server_address);
@@ -63,16 +64,16 @@ string Socket::readMessage(){
     if (newsocketDescriptor < 0)
         cout << "error on accept" << endl;
     
-    //read server request
-    bzero(buffer,256);
-    n = read(newsocketDescriptor,buffer,255);
+    //read message
+    bzero(buffer,65536);
+    n = read(newsocketDescriptor,buffer,65535);
     if (n < 0) cout << "error reading from socket" << endl;
     
     return buffer;
 }
 
 //send a message to specified location
-void Socket::writeMessage(string message, string address, string port){
+void Socket::writeMessage(void* message, string address, string port){
     
     //variables
     int socketDescriptor, portNum, n;
@@ -99,8 +100,8 @@ void Socket::writeMessage(string message, string address, string port){
     if (connect(socketDescriptor,(struct sockaddr *) &server_address,sizeof(server_address)) < 0)
         cout << "error connecting" << endl;
         
-    //send requests from queue to server
-    n = write(socketDescriptor,message.c_str(),strlen(message.c_str()));
+    //send message to location
+    n = write(socketDescriptor,message,sizeof(message));
     if (n < 0)
         cout << "error writing to socket" << endl;
     

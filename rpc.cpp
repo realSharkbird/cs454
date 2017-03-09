@@ -56,8 +56,10 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
     //create socket
     Socket * s = new Socket();
 
+    char* str = "test message";
+    
     //call the binder, inform it that a server procedure with the corresponding arguments are available at this server
-    s->writeMessage("father", SERVER_ADDRESS, SERVER_PORT);
+    s->writeMessage(str, SERVER_ADDRESS, SERVER_PORT);
     
     //Make an entry in a local database, associating the server skeleton with the name and list of argument types.
     

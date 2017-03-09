@@ -11,6 +11,10 @@ class Socket{
     
 public:
     Socket();
+    Socket(int, int);
+    Socket(std::string, std::string);
     void printLocation();
+    std::string readMessage();
+    void writeMessage(std::string);
     
 };

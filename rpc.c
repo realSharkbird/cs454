@@ -11,6 +11,7 @@
 #include <netdb.h>
 #include <queue>
 #include <thread>
+#include "Socket.h"
 
 const static int SUCCESS = 0;
 const static int ERROR = -1;
@@ -52,40 +53,9 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
     string SERVER_ADDRESS = getenv("SERVER_ADDRESS");
     string SERVER_PORT = getenv("SERVER_PORT");
     
-    //variables
-    int socketDescriptor, portNum, n;
-    struct sockaddr_in server_address;
-    struct hostent *server;
-    
-    //initialize sockets and stuff
-    bzero((char *) &server_address, sizeof(server_address));
-    socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
-    portNum = atoi(SERVER_PORT.c_str());
-    if (socketDescriptor < 0)
-        cout << "error opening socket" << endl;
-    server = gethostbyname(SERVER_ADDRESS.c_str());
-    if (server == NULL) {
-        cout << "error, host doesnt exist" << endl;
-        exit(0);
-    }
-    server_address.sin_family = AF_INET;
-    bcopy((char *)server->h_addr,
-          (char *)&server_address.sin_addr.s_addr,
-          server->h_length);
-    server_address.sin_port = htons(portNum);
-    if (connect(socketDescriptor,(struct sockaddr *) &server_address,sizeof(server_address)) < 0)
-        cout << "error connecting" << endl;
-    
-    string feridun = "mr goose";
-    
-    //send requests from queue to server
-    n = write(socketDescriptor,feridun.c_str(),strlen(feridun.c_str()));
-    
-    if (n < 0)
-        cout << "error writing to socket" << endl;
-    
-    char buffer[256];
-    bzero(buffer,256);
+    //create socket
+    Socket * s = new Socket(SERVER_ADDRESS, SERVER_PORT);
+    s->printLocation();
     
     //Make an entry in a local database, associating the server skeleton with the name and list of argument types.
     

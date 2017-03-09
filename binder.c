@@ -38,31 +38,16 @@ int main(){
     Socket * s = new Socket();
     s->printLocation();
     
-    /*
     //listen for requests
     while(true){
     
-        //wait for requests
-        clientLen = sizeof(client_address);
-        newsocketDescriptor = accept(socketDescriptor, (struct sockaddr *) &client_address, &clientLen);
-        if (newsocketDescriptor < 0)
-            cout << "error on accept" << endl;
+        string message = s->readMessage();
         
-        //determine whether client or server request
+        //determine if message from client or server
         
-        //read server request
-        bzero(buffer,256);
-        n = read(newsocketDescriptor,buffer,255);
-        if (n < 0) cout << "error reading from socket" << endl;
+        //server registration request
         
-        //print string received from server
-        cout << buffer;
-        
-        //send binder response with newly converted string
-        n = write(newsocketDescriptor,buffer,strlen(buffer));
-        if (n < 0) cout << "error writing to socket" << endl;
-        
-    }*/
+    }
     
     return 0;
 }

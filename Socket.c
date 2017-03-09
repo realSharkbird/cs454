@@ -15,24 +15,49 @@
 #include <map>
 #include <iostream>
 #include <cassert>
+#include <netdb.h>
 #include "Socket.h"
 
 using namespace std;
 
 Socket::Socket(){
+    Socket(INADDR_ANY, DEFAULT_PORT);
+}
+
+Socket::Socket(int address, int port){
     //setup sockets and stuff
+
     bzero((char *) &server_address, sizeof(server_address));
     socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
     if (socketDescriptor < 0)
         cout << "error opening socket" << endl;
     server_address.sin_family = AF_INET;
     server_address.sin_addr.s_addr = INADDR_ANY;
-    server_address.sin_port = htons(DEFAULT_PORT);
+    server_address.sin_port = htons(port);
     if (::bind(socketDescriptor, (struct sockaddr *) &server_address, sizeof(server_address)) < 0)
         cout << "error on binding" << endl;
     listen(socketDescriptor,MULTIPLEX);
     clientLen = sizeof(server_address);
+}
 
+Socket::Socket(string address, string port){
+    //setup sockets and stuff
+    int portNum = atoi(port.c_str());
+    struct hostent *server = gethostbyname(address.c_str());
+
+    bzero((char *) &server_address, sizeof(server_address));
+    socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
+    if (socketDescriptor < 0)
+        cout << "error opening socket" << endl;
+    server_address.sin_family = AF_INET;
+    bcopy((char *)server->h_addr,
+          (char *)&server_address.sin_addr.s_addr,
+          server->h_length);
+    server_address.sin_port = htons(portNum);
+    if (::bind(socketDescriptor, (struct sockaddr *) &server_address, sizeof(server_address)) < 0)
+        cout << "error on binding" << endl;
+    listen(socketDescriptor,MULTIPLEX);
+    clientLen = sizeof(server_address);
 }
 
 void Socket::printLocation(){
@@ -48,4 +73,32 @@ void Socket::printLocation(){
         cout << "SERVER_ADDRESS " << hostname << endl;
         cout << "SERVER_PORT " << ntohs(server_address.sin_port) << endl;
     }
+}
+
+string Socket::readMessage(){
+    //wait for requests
+    clientLen = sizeof(client_address);
+    newsocketDescriptor = accept(socketDescriptor, (struct sockaddr *) &client_address, &clientLen);
+    if (newsocketDescriptor < 0)
+        cout << "error on accept" << endl;
+    
+    //read server request
+    bzero(buffer,256);
+    n = read(newsocketDescriptor,buffer,255);
+    if (n < 0) cout << "error reading from socket" << endl;
+    
+    //print string received from server
+    cout << buffer;
+    
+    return buffer;
+}
+
+void Socket::writeMessage(string message){
+    
+     //send requests from queue to server
+     n = write(socketDescriptor,message.c_str(),strlen(message.c_str()));
+     
+     if (n < 0)
+     cout << "error writing to socket" << endl;
+    
 }

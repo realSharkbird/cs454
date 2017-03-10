@@ -12,6 +12,7 @@
 #include <queue>
 #include <thread>
 #include "Socket.h"
+#include "message.h"
 
 const static int SUCCESS = 0;
 const static int ERROR = -1;
@@ -55,6 +56,20 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
     
     //create socket
     Socket * s = new Socket();
+    
+    //create message content
+    int length = 4;
+    void** content = (void **)malloc(length * sizeof(void*));
+    content[0] = &SERVER_ADDRESS;
+    content[1] = &SERVER_PORT;
+    content[2] = &name;
+    content[3] = &argTypes;
+    
+    //create new message
+    Message* message = new Message(length, content);
+    message->type = TYPE_SERVER_BINDER_MESSAGE;
+    message->content = content;
+    message->content_type = CONTENT_TYPE_REGISTER;
 
     char* str = "test message";
     

@@ -33,6 +33,34 @@ Socket::Socket(){
     client_address.sin_port = htons(DEFAULT_PORT);
 }
 
+void Socket::Socket(string address, string port) {
+
+    //variables
+    int socketDescriptor, portNum, n;
+    struct sockaddr_in server_address;
+    struct hostent *server;
+
+    //initialize sockets and stuff
+    bzero((char *) &server_address, sizeof(server_address));
+    socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
+    portNum = atoi(port.c_str());
+    if (socketDescriptor < 0)
+        cout << "error opening socket" << endl;
+    server = gethostbyname(address.c_str());
+    if (server == NULL) {
+        cout << "error, host doesnt exist" << endl;
+        exit(0);
+    }
+
+    server_address.sin_family = AF_INET;
+    bcopy((char *)server->h_addr,
+          (char *)&server_address.sin_addr.s_addr,
+          server->h_length);
+    server_address.sin_port = htons(portNum);
+    if (connect(socketDescriptor,(struct sockaddr *) &server_address,sizeof(server_address)) < 0)
+        cout << "error connecting" << endl;
+}
+
 void Socket::printLocation(string locationName){
     
     if (::bind(socketDescriptor, (struct sockaddr *) &client_address,

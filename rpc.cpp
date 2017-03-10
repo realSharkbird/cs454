@@ -15,6 +15,7 @@
 #include "message.h"
 #include <map>
 #include <cassert>
+#include <cstring>
 #include "binder.h"
 
 const static int SUCCESS = 0;

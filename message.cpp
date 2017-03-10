@@ -5,7 +5,7 @@ using namespace std;
 
 //class for messaging protocols
 
-Message::Message(int length, void** content){
+Message::Message(int length, char* content){
     this->length = length;
     this->content = content;
     

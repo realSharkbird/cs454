@@ -7,7 +7,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include <string.h>
+#include <string>
 #include <netdb.h>
 #include <queue>
 #include <thread>
@@ -21,6 +21,8 @@ const static int WARNING = 1;
 using namespace std;
 
 Socket * binderSocket;
+
+//std::map<skeleton*, Location*>* localDatabase;
 
 //thread for connection to clients
 void readClient(){
@@ -66,12 +68,19 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
     Socket * s = new Socket();
     
     //create message content
-    int length = 4;
-    void** content = (void **)malloc(length * sizeof(void*));
-    content[0] = (void *)&SERVER_ADDRESS;
-    content[1] = (void *)&SERVER_PORT;
-    content[2] = (void *)&name;
-    content[3] = (void *)&argTypes;
+    int length = 0;
+    while(argTypes[length] != 0){
+        length++;
+    }
+    length++;
+    string str = str.append(SERVER_ADDRESS);
+    str.append(SERVER_PORT);
+    str.append(name);
+    char * content = (char *)malloc(strlen(str.c_str()) + length * sizeof(int));
+    strcpy(content, str.c_str());
+    for(int i = 0; i < length; i++){
+        ((int *)(content + strlen(str.c_str())))[i] = argTypes[i];
+    }
     
     //create new message
     Message* message = new Message(length, content);

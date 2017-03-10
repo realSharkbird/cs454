@@ -23,7 +23,7 @@ class Message{
     
 public:
     int length, type, content_type;
-    void** content;
-    Message(int, void**);
+    char* content;
+    Message(int, char*);
     
 };

@@ -84,7 +84,7 @@ void Socket::printLocation(string locationName){
 }
 
 //listen for a message
-void* Socket::readMessage(){
+char* Socket::readMessage(){
     
     //wait for requests
     serverLen = sizeof(server_address);
@@ -101,7 +101,7 @@ void* Socket::readMessage(){
 }
 
 //send a message to specified location
-void Socket::writeMessage(void* message, string address, string port){
+void Socket::writeMessage(char* message, string address, string port){
     
     //variables
     int socketDescriptor, portNum, n;

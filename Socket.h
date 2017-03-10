@@ -14,7 +14,7 @@ public:
     Socket(int, int);
     Socket(std::string, std::string);
     void printLocation(std::string);
-    void* readMessage();
-    void writeMessage(void*, std::string, std::string);
+    char* readMessage();
+    void writeMessage(char*, std::string, std::string);
     
 };

@@ -74,6 +74,21 @@ void Socket::listenForConnection(){
     
 }
 
+char* Socket::getLocationAddress(){
+    char* hostname = new char[1024];
+    gethostname(hostname, 1024);
+    
+    return hostname;
+}
+
+char* Socket::getLocationPort(){
+    string portStr = to_string(ntohs(server_address.sin_port));
+    char* port = new char[portStr.length()];
+    strcpy(port, portStr.c_str());
+    
+    return port;
+}
+
 void Socket::printLocation(string locationName){
     
     if (::bind(socketDescriptor, (struct sockaddr *) &server_address,
@@ -88,30 +103,29 @@ void Socket::printLocation(string locationName){
         exit(1);
     }else{
         
-        char hostname[1024];
-        gethostname(hostname, 1024);
-        
-        cout << locationName << "_ADDRESS " << hostname << endl;
-        cout << locationName << "_PORT " << ntohs(server_address.sin_port) << endl;
+        cout << locationName << "_ADDRESS " << getLocationAddress() << endl;
+        cout << locationName << "_PORT " << getLocationPort() << endl;
     }
 }
 
 //listen for a message and return the address and port of the sender
 char* Socket::readMessage(){
     
+    char* buffer = new char[16777216];
+    
     //read message
-    bzero(buffer,65536);
-    n = read(newsocketDescriptor,buffer,65535);
+    bzero(buffer,16777216);
+    n = read(newsocketDescriptor,buffer,16777216);
     if (n < 0) cout << "error reading from socket" << endl;
     
     return buffer;
 }
 
 //send a stream of bytes to specified location
-void Socket::writeMessage(char* message){
+void Socket::writeMessage(void* message, int length){
     
     //send message to location
-    n = write(newsocketDescriptor,message,sizeof(message));
+    n = write(newsocketDescriptor,message,length);
     if (n < 0){
         cout << "error writing to socket: " << n << endl;
         exit(1);

@@ -7,31 +7,18 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <string.h>
+#include <string>
 #include <map>
 #include <iostream>
 #include <cassert>
 #include "Socket.h"
 #include "message.h"
+#include "binder.h"
 
 #define DEFAULT_PORT 0 // port with #0 will be assigned to next available port.
 #define MULTIPLEX 5 //5 connections at max
 
 using namespace std;
-
-class Procedure {
-    
-public:
-    char * name;
-    int * argTypes;
-    void ** args;
-};
-
-class Location {
-    
-public:
-    string ip;
-    string port;
-};
 
 //database for procedures (procedure signature, location)
 std::map<Procedure*, Location*>* database;
@@ -50,44 +37,38 @@ int main(){
     while(true){
         
         s->listenForConnection();
-        int type = *((int*)(s->readMessage()));
+        char* type = s->readMessage();
 
         cout << "(debug) binder received type: " << type << endl;
 
         //server registration request
-        if(type == TYPE_SERVER_BINDER_MESSAGE){
+        if(strcmp(type, TYPE_SERVER_BINDER_MESSAGE) == 0){
             
-            s->writeMessage("Ack");
+            s->writeMessage((void*)"Ack", 4);
             
             Location* location = new Location();
             
-            cout << "0" << endl;
+            location->ip = (char*)s->readMessage();
+            s->writeMessage((void*)"Ack", 4);
             
-            location->ip = s->readMessage();
-            s->writeMessage("Ack");
-
-            cout << "1" << endl;
-            
-            location->port = s->readMessage();
-            s->writeMessage("Ack");
+            location->port = (char*)s->readMessage();
+            s->writeMessage((void*)"Ack", 4);
 
             Procedure* procedure = new Procedure();
             
-            cout << "2" << endl;
-            
-            procedure->name = s->readMessage();
-            s->writeMessage("Ack");
-
-            cout << "3" << endl;
+            procedure->name = (char*)s->readMessage();
+            s->writeMessage((void*)"Ack", 4);
             
             procedure->argTypes = (int *)s->readMessage();
-            s->writeMessage("Ack");
+            s->writeMessage((void*)"Ack", 4);
 
             database->insert( pair<Procedure*,Location*>(procedure, location) );
             
+            string str = procedure->name;
+            cout << "registered procedure " << str << " from server" << endl;
+            cout << "with ip: " << location->ip << " and port: "<< location->port << endl;
+
         }
-        
-        //s->closeSocket();
         
     }
     

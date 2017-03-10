@@ -15,8 +15,10 @@ public:
     Socket(std::string, std::string);
     void listenForConnection();
     void printLocation(std::string);
+    char* getLocationAddress();
+    char* getLocationPort();
     char* readMessage();
-    void writeMessage(char*);
+    void writeMessage(void*, int);
     void closeSocket();
 
 };

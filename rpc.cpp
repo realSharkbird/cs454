@@ -13,6 +13,9 @@
 #include <thread>
 #include "Socket.h"
 #include "message.h"
+#include <map>
+#include <cassert>
+#include "binder.h"
 
 const static int SUCCESS = 0;
 const static int ERROR = -1;
@@ -21,8 +24,9 @@ const static int WARNING = 1;
 using namespace std;
 
 Socket * binderSocket;
+Socket * clientSocket;
 
-//std::map<skeleton*, Location*>* localDatabase;
+std::map<skeleton, Location*>* localDatabase;
 
 //thread for connection to clients
 void readClient(){
@@ -31,14 +35,18 @@ void readClient(){
 
 //thread for connection to the binder
 void readBinder(){
-    //string binderAddress = getenv("BINDER_ADDRESS");
-    //string binderPort = getenv("BINDER_PORT");
+    string binderAddress = getenv("BINDER_ADDRESS");
+    string binderPort = getenv("BINDER_PORT");
 
     //binderSocket = new Socket(binderAddress, binderPort);
 }
 
 //first called by server
 int rpcInit(){
+    
+    clientSocket = new Socket();
+    
+    localDatabase = new std::map<skeleton, Location*>();
     
     //create a connection socket for accepting connections from clients
     std::thread t1(readClient);
@@ -57,40 +65,47 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
     
     cout << "sending register message" << endl;
     
-    //get server address and port
-    string SERVER_ADDRESS = getenv("SERVER_ADDRESS");
-    string SERVER_PORT = getenv("SERVER_PORT");
+    //get length of argTypes
+    int length = 0;
+    while(argTypes[length] != 0){
+        length++;
+    }
     
-    string BINDER_ADDRESS = getenv("BINDER_ADDRESS");
-    string BINDER_PORT = getenv("BINDER_PORT");
+    //get server address and port
+    char* SERVER_ADDRESS = clientSocket->getLocationAddress();
+    char* SERVER_PORT = clientSocket->getLocationPort();
+    
+    char* BINDER_ADDRESS = getenv("BINDER_ADDRESS");
+    char* BINDER_PORT = getenv("BINDER_PORT");
     
     //create socket
     Socket * s = new Socket(BINDER_ADDRESS, BINDER_PORT);
     
     //call the binder, inform it that a server procedure with the corresponding arguments are available at this server
-    s->writeMessage((char*)(&TYPE_SERVER_BINDER_MESSAGE));
-    
+    s->writeMessage(TYPE_SERVER_BINDER_MESSAGE, strlen(TYPE_SERVER_BINDER_MESSAGE));
+
     //wait for binder for acknowledgement
     s->readMessage();
-    
-    cout << "ack received" << endl;
-    
+
     //send message content
-    s->writeMessage((char*)(&SERVER_ADDRESS));
+    s->writeMessage(SERVER_ADDRESS, strlen(SERVER_ADDRESS));
     s->readMessage();
-    s->writeMessage((char*)(&SERVER_PORT));
+    s->writeMessage(SERVER_PORT, strlen(SERVER_PORT));
     s->readMessage();
-    s->writeMessage(name);
+    s->writeMessage(name, strlen(name));
     s->readMessage();
-    s->writeMessage((char*)argTypes);
+    s->writeMessage(argTypes, length * sizeof(int));
     s->readMessage();
-    
+
     s->closeSocket();
     
-    //create new message
-    
-    
     //Make an entry in a local database, associating the server skeleton with the name and list of argument types.
+    Location* location = new Location();
+    location->ip = SERVER_ADDRESS;
+    location->port = SERVER_PORT;
+    localDatabase->insert( pair<skeleton,Location*>(f, location) );
+    
+    cout << "registered skeleton " << name << " into local db" << endl;
     
     return SUCCESS;
 };
@@ -133,9 +148,9 @@ int rpcTerminate(){
     string BINDER_ADDRESS = getenv("BINDER_ADDRESS");
     string BINDER_PORT = getenv("BINDER_PORT");
 
-    Message* message = new Message(0, NULL);
-    message->type = TYPE_TERMINATE_MESSAGE;
-    message->content_type = CONTENT_TYPE_TERMINATE;
+    //Message* message = new Message(0, NULL);
+    //message->type = TYPE_TERMINATE_MESSAGE;
+    //message->content_type = CONTENT_TYPE_TERMINATE;
 
     //s->writeMessage(message);
 

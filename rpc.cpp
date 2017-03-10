@@ -126,13 +126,25 @@ int rpcCacheCall(char* name, int* argTypes, void** args){
 
 //called by client to terminate system
 int rpcTerminate(){
+    Socket * s = new Socket();
+
+    string BINDER_ADDRESS = getenv("BINDER_ADDRESS");
+    string BINDER_PORT = getenv("BINDER_PORT");
+
+    Message* message = new Message(0, NULL);
+    message->type = TYPE_TERMINATE_MESSAGE;
+    message->content_type = CONTENT_TYPE_TERMINATE;
+
+    s->writeMessage(message, BINDER_ADDRESS, BINDER_PORT);
+
     //send request to the binder
-    
+
     //binder in turn will inform servers to terminate
     
     //servers authenticate request by checking binder ip address
     
     //binder terminates after all servers have terminated
+    return SUCCESS;
     
 };
 

@@ -45,6 +45,7 @@ void readBinder(){
 int rpcInit(){
     
     clientSocket = new Socket();
+    clientSocket->printLocation("SERVER");
     
     localDatabase = new std::map<skeleton, Location*>();
     
@@ -143,16 +144,6 @@ int rpcCacheCall(char* name, int* argTypes, void** args){
 
 //called by client to terminate system
 int rpcTerminate(){
-    Socket * s = new Socket();
-
-    string BINDER_ADDRESS = getenv("BINDER_ADDRESS");
-    string BINDER_PORT = getenv("BINDER_PORT");
-
-    //Message* message = new Message(0, NULL);
-    //message->type = TYPE_TERMINATE_MESSAGE;
-    //message->content_type = CONTENT_TYPE_TERMINATE;
-
-    //s->writeMessage(message);
 
     //send request to the binder
 

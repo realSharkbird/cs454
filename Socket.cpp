@@ -32,6 +32,17 @@ Socket::Socket(){
     server_address.sin_addr.s_addr = INADDR_ANY;
     server_address.sin_port = htons(DEFAULT_PORT);
 
+    if (::bind(socketDescriptor, (struct sockaddr *) &server_address,
+               sizeof(server_address)) < 0)
+        cout << "error on binding" << endl;
+    listen(socketDescriptor,MULTIPLEX);
+    serverLen = sizeof(server_address);
+    
+    //print out server and port numbers
+    if (getsockname(socketDescriptor, (struct sockaddr *)&server_address, &serverLen) < 0){
+        cout << "failed to get hostname with errno: " << endl;
+        exit(1);
+    }
 }
 
 //create a client socket
@@ -91,21 +102,9 @@ char* Socket::getLocationPort(){
 
 void Socket::printLocation(string locationName){
     
-    if (::bind(socketDescriptor, (struct sockaddr *) &server_address,
-             sizeof(server_address)) < 0)
-        cout << "error on binding" << endl;
-    listen(socketDescriptor,MULTIPLEX);
-    serverLen = sizeof(server_address);
-    
-    //print out server and port numbers
-    if (getsockname(socketDescriptor, (struct sockaddr *)&server_address, &serverLen) < 0){
-        cout << "failed to get hostname with errno: " << endl;
-        exit(1);
-    }else{
-        
-        cout << locationName << "_ADDRESS " << getLocationAddress() << endl;
-        cout << locationName << "_PORT " << getLocationPort() << endl;
-    }
+    cout << locationName << "_ADDRESS " << getLocationAddress() << endl;
+    cout << locationName << "_PORT " << getLocationPort() << endl;
+
 }
 
 //listen for a message and return the address and port of the sender

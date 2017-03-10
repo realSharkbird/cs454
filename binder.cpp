@@ -42,41 +42,47 @@ int main(){
     //variables
     database = new std::map<Procedure*, Location*>();
     
-    //create socket
+    //create listening socket
     Socket * s = new Socket();
     s->printLocation("BINDER");
-    
+
     //listen for requests
     while(true){
-    
-        Message* message = (Message*)(s->readMessage());
         
-        //determine if message from client or server
-        cout << "(debug) binder received message: " << message << endl;
+        s->listenForConnection();
+        int type = *((int*)(s->readMessage()));
+
+        cout << "(debug) binder received type: " << type << endl;
 
         //server registration request
-        if(message->type == TYPE_SERVER_BINDER_MESSAGE && message->content_type == CONTENT_TYPE_REGISTER){
+        if(type == TYPE_SERVER_BINDER_MESSAGE){
+            
+            s->writeMessage("Ack");
             
             Location* location = new Location();
             
             cout << "0" << endl;
             
-            location->ip = *((char *)(message->content[0]));
-            
+            location->ip = s->readMessage();
+            s->writeMessage("Ack");
+
             cout << "1" << endl;
             
-            location->port = *((char *)(message->content[1]));
-            
+            location->port = s->readMessage();
+            s->writeMessage("Ack");
+
             Procedure* procedure = new Procedure();
             
             cout << "2" << endl;
             
-            procedure->name = (char *)(message->content[2]);
-            
+            procedure->name = s->readMessage();
+            s->writeMessage("Ack");
+
             cout << "3" << endl;
             
-            procedure->argTypes = (int *)message->content[3];
-            
+            procedure->argTypes = (int *)s->readMessage();
+            s->writeMessage("Ack");
+
             database->insert( pair<Procedure*,Location*>(procedure, location) );
             
         }

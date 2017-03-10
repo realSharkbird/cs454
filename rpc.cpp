@@ -31,10 +31,10 @@ void readClient(){
 
 //thread for connection to the binder
 void readBinder(){
-    string binderAddress = getenv("BINDER_ADDRESS");
-    string binderPort = getenv("BINDER_PORT");
+    //string binderAddress = getenv("BINDER_ADDRESS");
+    //string binderPort = getenv("BINDER_PORT");
 
-    binderSocket = new Socket(binderAddress, binderPort);
+    //binderSocket = new Socket(binderAddress, binderPort);
 }
 
 //first called by server
@@ -65,31 +65,28 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
     string BINDER_PORT = getenv("BINDER_PORT");
     
     //create socket
-    Socket * s = new Socket();
-    
-    //create message content
-    int length = 0;
-    while(argTypes[length] != 0){
-        length++;
-    }
-    length++;
-    string str = str.append(SERVER_ADDRESS);
-    str.append(SERVER_PORT);
-    str.append(name);
-    char * content = (char *)malloc(strlen(str.c_str()) + length * sizeof(int));
-    strcpy(content, str.c_str());
-    for(int i = 0; i < length; i++){
-        ((int *)(content + strlen(str.c_str())))[i] = argTypes[i];
-    }
-    
-    //create new message
-    Message* message = new Message(length, content);
-    message->type = TYPE_SERVER_BINDER_MESSAGE;
-    message->content = content;
-    message->content_type = CONTENT_TYPE_REGISTER;
+    Socket * s = new Socket(BINDER_ADDRESS, BINDER_PORT);
     
     //call the binder, inform it that a server procedure with the corresponding arguments are available at this server
-    s->writeMessage(message, BINDER_ADDRESS, BINDER_PORT);
+    s->writeMessage((char*)(&TYPE_SERVER_BINDER_MESSAGE));
+    
+    //wait for binder for acknowledgement
+    s->readMessage();
+    
+    cout << "ack received" << endl;
+    
+    //send message content
+    s->writeMessage((char*)(&SERVER_ADDRESS));
+    s->readMessage();
+    s->writeMessage((char*)(&SERVER_PORT));
+    s->readMessage();
+    s->writeMessage(name);
+    s->readMessage();
+    s->writeMessage((char*)argTypes);
+    s->readMessage();
+    
+    //create new message
+    
     
     //Make an entry in a local database, associating the server skeleton with the name and list of argument types.
     

@@ -39,14 +39,13 @@ Socket::Socket(string address, string port) {
 
     //variables
     int portNum, n;
-    struct sockaddr_in server_address;
     struct hostent *server;
 
     //initialize sockets and stuff
     bzero((char *) &server_address, sizeof(server_address));
-    socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
+    newsocketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
     portNum = atoi(port.c_str());
-    if (socketDescriptor < 0)
+    if (newsocketDescriptor < 0)
         cout << "error opening socket" << endl;
     server = gethostbyname(address.c_str());
     if (server == NULL) {
@@ -59,7 +58,7 @@ Socket::Socket(string address, string port) {
           (char *)&server_address.sin_addr.s_addr,
           server->h_length);
     server_address.sin_port = htons(portNum);
-    if (connect(socketDescriptor,(struct sockaddr *) &server_address,sizeof(server_address)) < 0)
+    if (connect(newsocketDescriptor,(struct sockaddr *) &server_address,sizeof(server_address)) < 0)
         cout << "error connecting" << endl;
 }
 
@@ -68,9 +67,9 @@ void Socket::listenForConnection(){
     
     //wait for requests
     clientLen = sizeof(client_address);
-    socketDescriptor = accept(socketDescriptor, (struct sockaddr *) &client_address, &clientLen);
-    if (socketDescriptor < 0)
-        cout << "error on accept: " << socketDescriptor << endl;
+    newsocketDescriptor = accept(socketDescriptor, (struct sockaddr *) &client_address, &clientLen);
+    if (newsocketDescriptor < 0)
+        cout << "error on accept: " << newsocketDescriptor << endl;
     
     
 }
@@ -102,7 +101,7 @@ char* Socket::readMessage(){
     
     //read message
     bzero(buffer,65536);
-    n = read(socketDescriptor,buffer,65535);
+    n = read(newsocketDescriptor,buffer,65535);
     if (n < 0) cout << "error reading from socket" << endl;
     
     return buffer;
@@ -112,10 +111,15 @@ char* Socket::readMessage(){
 void Socket::writeMessage(char* message){
     
     //send message to location
-    n = write(socketDescriptor,message,sizeof(message));
+    n = write(newsocketDescriptor,message,sizeof(message));
     if (n < 0){
         cout << "error writing to socket: " << n << endl;
         exit(1);
     }
     
+}
+
+//close socket
+void Socket::closeSocket(){
+    close(newsocketDescriptor);
 }

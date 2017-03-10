@@ -85,6 +85,8 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
     s->writeMessage((char*)argTypes);
     s->readMessage();
     
+    s->closeSocket();
+    
     //create new message
     
     
@@ -135,7 +137,7 @@ int rpcTerminate(){
     message->type = TYPE_TERMINATE_MESSAGE;
     message->content_type = CONTENT_TYPE_TERMINATE;
 
-    s->writeMessage(message, BINDER_ADDRESS, BINDER_PORT);
+    //s->writeMessage(message);
 
     //send request to the binder
 

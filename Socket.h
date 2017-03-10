@@ -3,7 +3,7 @@
 
 class Socket{
     //declare socket variables
-    int socketDescriptor;
+    int socketDescriptor, newsocketDescriptor;
     socklen_t clientLen, serverLen;
     char buffer[65536];
     struct sockaddr_in server_address, client_address;
@@ -17,5 +17,6 @@ public:
     void printLocation(std::string);
     char* readMessage();
     void writeMessage(char*);
+    void closeSocket();
 
 };

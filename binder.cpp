@@ -87,6 +87,8 @@ int main(){
             
         }
         
+        //s->closeSocket();
+        
     }
     
     return 0;

@@ -54,9 +54,9 @@ Socket::Socket(string address, string port) {
 
     //initialize sockets and stuff
     bzero((char *) &server_address, sizeof(server_address));
-    newsocketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
+    newSocketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
     portNum = atoi(port.c_str());
-    if (newsocketDescriptor < 0)
+    if (newSocketDescriptor < 0)
         cout << "error opening socket" << endl;
     server = gethostbyname(address.c_str());
     if (server == NULL) {
@@ -69,7 +69,7 @@ Socket::Socket(string address, string port) {
           (char *)&server_address.sin_addr.s_addr,
           server->h_length);
     server_address.sin_port = htons(portNum);
-    if (connect(newsocketDescriptor,(struct sockaddr *) &server_address,sizeof(server_address)) < 0)
+    if (connect(newSocketDescriptor,(struct sockaddr *) &server_address,sizeof(server_address)) < 0)
         cout << "error connecting" << endl;
 }
 
@@ -78,16 +78,16 @@ void Socket::listenForConnection(){
     
     //wait for requests
     clientLen = sizeof(client_address);
-    newsocketDescriptor = accept(socketDescriptor, (struct sockaddr *) &client_address, &clientLen);
-    if (newsocketDescriptor < 0)
-        cout << "error on accept: " << newsocketDescriptor << endl;
+    newSocketDescriptor = accept(socketDescriptor, (struct sockaddr *) &client_address, &clientLen);
+    if (newSocketDescriptor < 0)
+        cout << "error on accept: " << newSocketDescriptor << endl;
     
     
 }
 
 char* Socket::getLocationAddress(){
-    char* hostname = new char[1024];
-    gethostname(hostname, 1024);
+    char* hostname = new char[MAX_HOSTNAME_LEN];
+    gethostname(hostname, MAX_HOSTNAME_LEN);
     
     return hostname;
 }
@@ -110,11 +110,11 @@ void Socket::printLocation(string locationName){
 //listen for a message and return the address and port of the sender
 char* Socket::readMessage(){
     
-    char* buffer = new char[16777216];
+    char* buffer = new char[MESSAGE_BUFFER_SIZE];
     
     //read message
-    bzero(buffer,16777216);
-    n = read(newsocketDescriptor,buffer,16777216);
+    bzero(buffer, MESSAGE_BUFFER_SIZE);
+    n = read(newSocketDescriptor, buffer, MESSAGE_BUFFER_SIZE);
     if (n < 0) cout << "error reading from socket" << endl;
     
     return buffer;
@@ -124,7 +124,7 @@ char* Socket::readMessage(){
 void Socket::writeMessage(void* message, int length){
     
     //send message to location
-    n = write(newsocketDescriptor,message,length);
+    n = write(newSocketDescriptor,message,length);
     if (n < 0){
         cout << "error writing to socket: " << n << endl;
         exit(1);
@@ -134,5 +134,5 @@ void Socket::writeMessage(void* message, int length){
 
 //close socket
 void Socket::closeSocket(){
-    close(newsocketDescriptor);
+    close(newSocketDescriptor);
 }

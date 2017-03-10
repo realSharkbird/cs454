@@ -1,11 +1,12 @@
 #define DEFAULT_PORT 0 // port with #0 will be assigned to next available port.
 #define MULTIPLEX 5 //5 connections at max
+#define MESSAGE_BUFFER_SIZE 16777216
+#define MAX_HOSTNAME_LEN 1024
 
 class Socket{
     //declare socket variables
-    int socketDescriptor, newsocketDescriptor;
+    int socketDescriptor, newSocketDescriptor;
     socklen_t clientLen, serverLen;
-    char buffer[65536];
     struct sockaddr_in server_address, client_address;
     int n;
     

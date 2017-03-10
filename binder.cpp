@@ -15,9 +15,6 @@
 #include "message.h"
 #include "binder.h"
 
-#define DEFAULT_PORT 0 // port with #0 will be assigned to next available port.
-#define MULTIPLEX 5 //5 connections at max
-
 using namespace std;
 
 //database for procedures (procedure signature, location)
@@ -48,15 +45,15 @@ int main(){
             
             Location* location = new Location();
             
-            location->ip = (char*)s->readMessage();
+            location->ip = s->readMessage();
             s->writeMessage((void*)"Ack", 4);
             
-            location->port = (char*)s->readMessage();
+            location->port = s->readMessage();
             s->writeMessage((void*)"Ack", 4);
 
             Procedure* procedure = new Procedure();
             
-            procedure->name = (char*)s->readMessage();
+            procedure->name = s->readMessage();
             s->writeMessage((void*)"Ack", 4);
             
             procedure->argTypes = (int *)s->readMessage();

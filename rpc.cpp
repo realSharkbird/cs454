@@ -36,10 +36,7 @@ void readClient(){
 
 //thread for connection to the binder
 void readBinder(){
-    string binderAddress = getenv("BINDER_ADDRESS");
-    string binderPort = getenv("BINDER_PORT");
 
-    //binderSocket = new Socket(binderAddress, binderPort);
 }
 
 //first called by server
@@ -72,7 +69,7 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
     while(argTypes[length] != 0){
         length++;
     }
-    
+
     //get server address and port
     char* SERVER_ADDRESS = clientSocket->getLocationAddress();
     char* SERVER_PORT = clientSocket->getLocationPort();

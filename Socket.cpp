@@ -33,7 +33,7 @@ Socket::Socket(){
     client_address.sin_port = htons(DEFAULT_PORT);
 }
 
-void Socket::Socket(string address, string port) {
+Socket::Socket(string address, string port) {
 
     //variables
     int socketDescriptor, portNum, n;

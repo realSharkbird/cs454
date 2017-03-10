@@ -18,25 +18,29 @@
 
 using namespace std;
 
-class procedure {
+class Procedure {
+    
+public:
     char * name;
-    int * argtypes;
+    int * argTypes;
     void ** args;
 };
 
-class location {
+class Location {
+    
+public:
     string ip;
-    int port;
+    string port;
 };
 
 //database for procedures (procedure signature, location)
-std::map<procedure, location>* database;
+std::map<Procedure*, Location*>* database;
 
 //This binder is the first thing to run
 int main(){
     
     //variables
-    database = new std::map<procedure, location>();
+    database = new std::map<Procedure*, Location*>();
     
     //create socket
     Socket * s = new Socket();
@@ -51,6 +55,31 @@ int main(){
         cout << "(debug) binder received message: " << message << endl;
 
         //server registration request
+        if(message->type == TYPE_SERVER_BINDER_MESSAGE && message->content_type == CONTENT_TYPE_REGISTER){
+            
+            Location* location = new Location();
+            
+            cout << "0" << endl;
+            
+            location->ip = *((char *)(message->content[0]));
+            
+            cout << "1" << endl;
+            
+            location->port = *((char *)(message->content[1]));
+            
+            Procedure* procedure = new Procedure();
+            
+            cout << "2" << endl;
+            
+            procedure->name = (char *)(message->content[2]);
+            
+            cout << "3" << endl;
+            
+            procedure->argTypes = (int *)message->content[3];
+            
+            database->insert( pair<Procedure*,Location*>(procedure, location) );
+            
+        }
         
     }
     

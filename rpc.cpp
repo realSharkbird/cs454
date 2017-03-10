@@ -59,27 +59,28 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
     string SERVER_ADDRESS = getenv("SERVER_ADDRESS");
     string SERVER_PORT = getenv("SERVER_PORT");
     
+    string BINDER_ADDRESS = getenv("BINDER_ADDRESS");
+    string BINDER_PORT = getenv("BINDER_PORT");
+    
     //create socket
     Socket * s = new Socket();
     
     //create message content
     int length = 4;
     void** content = (void **)malloc(length * sizeof(void*));
-    content[0] = &SERVER_ADDRESS;
-    content[1] = &SERVER_PORT;
-    content[2] = &name;
-    content[3] = &argTypes;
+    content[0] = (void *)&SERVER_ADDRESS;
+    content[1] = (void *)&SERVER_PORT;
+    content[2] = (void *)&name;
+    content[3] = (void *)&argTypes;
     
     //create new message
     Message* message = new Message(length, content);
     message->type = TYPE_SERVER_BINDER_MESSAGE;
     message->content = content;
     message->content_type = CONTENT_TYPE_REGISTER;
-
-    char* str = "test message";
     
     //call the binder, inform it that a server procedure with the corresponding arguments are available at this server
-    s->writeMessage(str, SERVER_ADDRESS, SERVER_PORT);
+    s->writeMessage(message, BINDER_ADDRESS, BINDER_PORT);
     
     //Make an entry in a local database, associating the server skeleton with the name and list of argument types.
     

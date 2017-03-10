@@ -20,14 +20,19 @@ const static int WARNING = 1;
 
 using namespace std;
 
+Socket * binderSocket;
+
 //thread for connection to clients
 void readClient(){
-    
+
 }
 
 //thread for connection to the binder
 void readBinder(){
-    
+    string binderAddress = getenv("BINDER_ADDRESS");
+    string binderPort = getenv("BINDER_PORT");
+
+    binderSocket = new Socket(binderAddress, binderPort);
 }
 
 //first called by server

@@ -30,6 +30,14 @@ Socket * serverSocket;
 
 std::map<skeleton, Location*>* localDatabase;
 
+int getArgLength(int* argTypes){
+    int length = 0;
+    while(argTypes[length] != 0){
+        length++;
+    }
+    return length;
+}
+
 //thread for connection to clients
 void readClient(){
 
@@ -68,13 +76,10 @@ int rpcInit(){
 //2nd function called by server
 int rpcRegister(char* name, int* argTypes, skeleton f){
     
-    cout << "sending register message" << endl;
+    DEBUG_MSG("sending register message");
     
     //get length of argTypes
-    int length = 0;
-    while(argTypes[length] != 0){
-        length++;
-    }
+    int length = getArgLength(argTypes);
 
     //get server address and port
     char* SERVER_ADDRESS = clientSocket->getLocationAddress();
@@ -111,7 +116,7 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
     location->port = SERVER_PORT;
     localDatabase->insert( pair<skeleton,Location*>(f, location) );
     
-    cout << "registered skeleton " << name << " into local db" << endl;
+    DEBUG_MSG("registered skeleton " << name << " into local db");
     
     return SUCCESS;
 };
@@ -119,7 +124,7 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
 //3rd function called by server
 int rpcExecute(){
     
-    cout << "rpc execute called" << endl;
+    DEBUG_MSG("rpc execute called");
     
     while(true){
         
@@ -128,7 +133,7 @@ int rpcExecute(){
         //wait and receive requests
         char* type = clientSocket->readMessage();
 
-        cout << "received rpc call from a client" << endl;
+        DEBUG_MSG("received rpc call from a client");
         
         //check request
         if(strcmp(type, TYPE_CLIENT_SERVER_MESSAGE) == 0){
@@ -141,6 +146,8 @@ int rpcExecute(){
                 clientSocket->writeMessage((void*)"Ack", 4);
                 int* argTypes = (int*)clientSocket->readMessage();
                 clientSocket->writeMessage((void*)"Ack", 4);
+                
+                int length = getArgLength(argTypes);
                 
                 //read args
                 void** args;
@@ -162,12 +169,12 @@ int rpcExecute(){
 //called by client
 int rpcCall(char* name, int* argTypes, void** args){
     
-    cout << "rpcCall called" << endl;
+    DEBUG_MSG("rpcCall called");
     
     char* BINDER_ADDRESS = getenv("BINDER_ADDRESS");
     char* BINDER_PORT = getenv("BINDER_PORT");
     
-    cout << "sending location request to " << BINDER_ADDRESS << endl;
+    DEBUG_MSG("sending location request to " << BINDER_ADDRESS);
     
     //send a location request message to the binder to locate the server for the procedure
     binderSocket = new Socket(BINDER_ADDRESS, BINDER_PORT);
@@ -181,28 +188,28 @@ int rpcCall(char* name, int* argTypes, void** args){
     binderSocket->readMessage();
     binderSocket->writeMessage(argTypes, sizeof(argTypes));
     
-    cout << "retreiving server location" << endl;
+    DEBUG_MSG("retreiving server location");
     
     char* SERVER_ADDRESS = binderSocket->readMessage();
     binderSocket->writeMessage((void*)"Ack", 4);
     char* SERVER_PORT = binderSocket->readMessage();
     
-    cout << "received server location from binder" << endl;
-    cout << "server address: " << SERVER_ADDRESS << endl;
-    cout << "server port: " << SERVER_PORT << endl;
+    DEBUG_MSG("received server location from binder");
+    DEBUG_MSG("server address: " << SERVER_ADDRESS);
+    DEBUG_MSG("server port: " << SERVER_PORT);
 
     binderSocket->closeSocket();
     
-    cout << "sending rpc call to server" << endl;
+    DEBUG_MSG("sending rpc call to server");
     
     //Send an execute-request message to the server
     serverSocket = new Socket(SERVER_ADDRESS, SERVER_PORT);
     
-    cout << "server socket initiated" << endl;
+    DEBUG_MSG("server socket initiated");
     
     serverSocket->writeMessage(TYPE_CLIENT_SERVER_MESSAGE, strlen(TYPE_CLIENT_SERVER_MESSAGE));
     
-    cout << "first msg sent" << endl;
+    DEBUG_MSG("first msg sent");
 
     serverSocket->readMessage();
     serverSocket->writeMessage(CONTENT_TYPE_EXECUTE, strlen(CONTENT_TYPE_EXECUTE));
@@ -212,6 +219,8 @@ int rpcCall(char* name, int* argTypes, void** args){
     serverSocket->writeMessage(argTypes, sizeof(argTypes));
     serverSocket->readMessage();
     
+    int length = getArgLength(argTypes);
+
     //send args
     
     //retreive results

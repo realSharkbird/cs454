@@ -153,12 +153,42 @@ int rpcExecute(){
 
 //called by client
 int rpcCall(char* name, int* argTypes, void** args){
-    //send a location request message to the binder to locate the server for the procedure
     
+    cout << "rpcCall called" << endl;
+    
+    char* BINDER_ADDRESS = getenv("BINDER_ADDRESS");
+    char* BINDER_PORT = getenv("BINDER_PORT");
+    
+    cout << "sending location request to " << BINDER_ADDRESS << endl;
+    
+    //send a location request message to the binder to locate the server for the procedure
+    binderSocket = new Socket(BINDER_ADDRESS, BINDER_PORT);
+    binderSocket->writeMessage(TYPE_CLIENT_BINDER_MESSAGE, strlen(TYPE_CLIENT_BINDER_MESSAGE));
+    binderSocket->readMessage();
+    binderSocket->writeMessage(CONTENT_TYPE_LOC_REQUEST, strlen(CONTENT_TYPE_LOC_REQUEST));
+    binderSocket->readMessage();
+    
+    //send procedure
+    binderSocket->writeMessage(name, strlen(name));
+    binderSocket->readMessage();
+    binderSocket->writeMessage(argTypes, sizeof(argTypes));
+    
+    cout << "retreiving server location" << endl;
+    
+    char* SERVER_ADDRESS = binderSocket->readMessage();
+    binderSocket->writeMessage((void*)"Ack", 4);
+    char* SERVER_PORT = binderSocket->readMessage();
+    
+    cout << "received server location from binder" << endl;
+    cout << "server address: " << SERVER_ADDRESS << endl;
+    cout << "server port: " << SERVER_PORT << endl;
+
     //Send an execute-request message to the server
     
     //retreive results
     
+    binderSocket->closeSocket();
+
 };
 
 //called by client

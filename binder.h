@@ -4,9 +4,9 @@
 class Procedure {
     
 public:
+    bool operator<(const Procedure rhs) const;
     char * name;
     int * argTypes;
-    void ** args;
 };
 
 class Location {

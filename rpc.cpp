@@ -230,11 +230,8 @@ int rpcCall(char* name, int* argTypes, void** args){
         
         DEBUG_MSG("sending arg " << i);
         
-        //determine arg type
-        int argType = argTypes[i];
-        
         //determine if input, output or both (I guess this means whether it's a pointer or not)
-        int io = argType >> ARG_OUTPUT;
+        int io = (argTypes[i] >> ARG_OUTPUT) & 3;
         switch(io){
             case 0:
                 //none
@@ -257,13 +254,13 @@ int rpcCall(char* name, int* argTypes, void** args){
 
                 break;
             default:
-                DEBUG_MSG("error in detecting io");
+                DEBUG_MSG("error in detecting io: " << io);
                 
                 break;
         }
         
         //determine if argument is scalar or array
-        int length = 65535 & argType;
+        int length = 65535 & argTypes[i];
         if(length == 0){
             DEBUG_MSG("arg is scalar");
 
@@ -275,29 +272,42 @@ int rpcCall(char* name, int* argTypes, void** args){
 
         }
         
+        //determine arg type
+        int argType = (argTypes[i] >> 16) & 255;
+        
         //send argument(s) to the server
         switch(argType){
             case ARG_CHAR:
-                
+                DEBUG_MSG("arg is char");
+
                 break;
                 
             case ARG_SHORT:
-                
+                DEBUG_MSG("arg is short");
+
                 break;
                 
             case ARG_INT:
-                
+                DEBUG_MSG("arg is int");
+
                 break;
                 
             case ARG_LONG:
-                
+                DEBUG_MSG("arg is long");
+
                 break;
                 
             case ARG_DOUBLE:
-                
+                DEBUG_MSG("arg is double");
+
                 break;
                 
             case ARG_FLOAT:
+                DEBUG_MSG("arg is float");
+
+                break;
+            default:
+                DEBUG_MSG("error detecting argType");
                 
                 break;
         }

@@ -30,12 +30,122 @@ Socket * serverSocket;
 
 std::map<skeleton, Location*>* localDatabase;
 
-int getArgLength(int* argTypes){
+//methods for dealing with args
+int getArgIO(int argType){
+    
+    int io = (argType >> ARG_OUTPUT) & 3;
+    
+    switch(io){
+        case 0:
+            //none
+            DEBUG_MSG("arg is none");
+            
+            break;
+        case 1:
+            //input
+            DEBUG_MSG("arg is input");
+            
+            break;
+        case 2:
+            //output
+            DEBUG_MSG("arg is output");
+            
+            break;
+        case 3:
+            //both
+            DEBUG_MSG("arg is both");
+            
+            break;
+        default:
+            DEBUG_MSG("error in detecting io: " << io);
+            
+            break;
+    }
+    
+    return io;
+
+}
+
+int getArgType(int argType){
+    
+    int type = (argType >> 16) & 255;
+    
+    return type;
+
+}
+
+int getArgLength(int argType){
+    
+    int length = 65535 & argType;
+    
+    if(length == 0){
+        DEBUG_MSG("arg is scalar");
+        
+    }else if(length > 0){
+        DEBUG_MSG("arg is array: " << length);
+        
+    }else{
+        DEBUG_MSG("error, arg length is negative: " << length);
+        
+    }
+    
+    return length;
+
+}
+
+int getNumArgs(int* argTypes){
     int length = 0;
     while(argTypes[length] != 0){
         length++;
     }
     return length;
+}
+
+int getArgSize(int argType){
+    int length = getArgLength(argType);
+    if(length == 0){
+        length = 1;
+    }
+    int type = getArgType(argType);
+    //send argument(s) to the server
+    switch(type){
+        case ARG_CHAR:
+            DEBUG_MSG("arg is char");
+            return sizeof(char) * length;
+            
+        case ARG_SHORT:
+            DEBUG_MSG("arg is short");
+            return sizeof(short) * length;
+            
+        case ARG_INT:
+            DEBUG_MSG("arg is int");
+            return sizeof(int) * length;
+            
+        case ARG_LONG:
+            DEBUG_MSG("arg is long");
+            return sizeof(long) * length;
+            
+        case ARG_DOUBLE:
+            DEBUG_MSG("arg is double");
+            return sizeof(double) * length;
+            
+        case ARG_FLOAT:
+            DEBUG_MSG("arg is float");
+            return sizeof(float) * length;
+            
+        default:
+            DEBUG_MSG("error detecting argType");
+            return 0;
+
+    }
+}
+
+int getTotalArgSize(int* argTypes){
+    int size = 0;
+    for(int i = 0; i < getNumArgs(argTypes); i++){
+        size += getArgSize(argTypes[i]);
+    }
+    return size;
 }
 
 //thread for connection to clients
@@ -78,8 +188,8 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
     
     DEBUG_MSG("sending register message");
     
-    //get length of argTypes
-    int length = getArgLength(argTypes);
+    //get number of args
+    int length = getNumArgs(argTypes);
 
     //get server address and port
     char* SERVER_ADDRESS = clientSocket->getLocationAddress();
@@ -147,11 +257,34 @@ int rpcExecute(){
                 int* argTypes = (int*)clientSocket->readMessage();
                 clientSocket->writeMessage((void*)"Ack", 4);
                 
-                int length = getArgLength(argTypes);
+                int length = getNumArgs(argTypes);
                 
-                //read args
-                void** args;
+                //proceed to read args
+                void** args = (void **)malloc(length * sizeof(void *));;
                 
+                for(int i = 0; i < length; i++){
+
+                    //read io
+                    int io = *(clientSocket->readMessage());
+                    clientSocket->writeMessage((void*)"Ack", 4);
+                    DEBUG_MSG("received io: " << io);
+                    
+                    //read array or scalar
+                    int argLength = *(clientSocket->readMessage());
+                    clientSocket->writeMessage((void*)"Ack", 4);
+                    DEBUG_MSG("received array length: " << argLength);
+
+                    //read argType
+                    int argType = *(clientSocket->readMessage());
+                    clientSocket->writeMessage((void*)"Ack", 4);
+                    DEBUG_MSG("received arg type: " << argType);
+                    
+                    //read args
+                    
+                    
+                    //args[i] =
+
+                }
                 //forward requests to skeletons
                 //skeleton f = localDatabase.get();
                 
@@ -168,6 +301,8 @@ int rpcExecute(){
 
 //called by client
 int rpcCall(char* name, int* argTypes, void** args){
+    
+    int length = getNumArgs(argTypes);
     
     DEBUG_MSG("rpcCall called");
     
@@ -186,7 +321,7 @@ int rpcCall(char* name, int* argTypes, void** args){
     //send procedure
     binderSocket->writeMessage(name, strlen(name));
     binderSocket->readMessage();
-    binderSocket->writeMessage(argTypes, sizeof(argTypes));
+    binderSocket->writeMessage(argTypes, sizeof(int) * length);
     
     DEBUG_MSG("retreiving server location");
     
@@ -209,20 +344,16 @@ int rpcCall(char* name, int* argTypes, void** args){
     
     serverSocket->writeMessage(TYPE_CLIENT_SERVER_MESSAGE, strlen(TYPE_CLIENT_SERVER_MESSAGE));
     
-    DEBUG_MSG("type sent");
-
     serverSocket->readMessage();
     serverSocket->writeMessage(CONTENT_TYPE_EXECUTE, strlen(CONTENT_TYPE_EXECUTE));
     serverSocket->readMessage();
-    serverSocket->writeMessage(name, sizeof(name));
+    serverSocket->writeMessage(name, strlen(name));
     serverSocket->readMessage();
-    serverSocket->writeMessage(argTypes, sizeof(argTypes));
+    serverSocket->writeMessage(argTypes, sizeof(int) * length);
     serverSocket->readMessage();
     
     DEBUG_MSG("Sending args for remote procedure: " << name);
     
-    int length = getArgLength(argTypes);
-
     DEBUG_MSG("arg length: " << length);
     
     //send args
@@ -231,87 +362,28 @@ int rpcCall(char* name, int* argTypes, void** args){
         DEBUG_MSG("sending arg " << i);
         
         //determine if input, output or both (I guess this means whether it's a pointer or not)
-        int io = (argTypes[i] >> ARG_OUTPUT) & 3;
-        switch(io){
-            case 0:
-                //none
-                DEBUG_MSG("arg is none");
-
-                break;
-            case 1:
-                //input
-                DEBUG_MSG("arg is input");
-
-                break;
-            case 2:
-                //output
-                DEBUG_MSG("arg is output");
-
-                break;
-            case 3:
-                //both
-                DEBUG_MSG("arg is both");
-
-                break;
-            default:
-                DEBUG_MSG("error in detecting io: " << io);
-                
-                break;
-        }
+        int io = getArgIO(argTypes[i]);
+        serverSocket->writeMessage(&io, sizeof(int));
+        serverSocket->readMessage();
         
         //determine if argument is scalar or array
-        int length = 65535 & argTypes[i];
-        if(length == 0){
-            DEBUG_MSG("arg is scalar");
-
-        }else if(length > 0){
-            DEBUG_MSG("arg is array: " << length);
-
-        }else{
-            DEBUG_MSG("error, arg length is negative: " << length);
-
-        }
+        int argLength = getArgLength(argTypes[i]);
+        
+        serverSocket->writeMessage(&argLength, sizeof(int));
+        serverSocket->readMessage();
+        
+        DEBUG_MSG("sent arg length");
         
         //determine arg type
-        int argType = (argTypes[i] >> 16) & 255;
+        int argType = getArgType(argTypes[i]);
         
-        //send argument(s) to the server
-        switch(argType){
-            case ARG_CHAR:
-                DEBUG_MSG("arg is char");
-
-                break;
-                
-            case ARG_SHORT:
-                DEBUG_MSG("arg is short");
-
-                break;
-                
-            case ARG_INT:
-                DEBUG_MSG("arg is int");
-
-                break;
-                
-            case ARG_LONG:
-                DEBUG_MSG("arg is long");
-
-                break;
-                
-            case ARG_DOUBLE:
-                DEBUG_MSG("arg is double");
-
-                break;
-                
-            case ARG_FLOAT:
-                DEBUG_MSG("arg is float");
-
-                break;
-            default:
-                DEBUG_MSG("error detecting argType");
-                
-                break;
-        }
+        DEBUG_MSG("sending arg type");
         
+        serverSocket->writeMessage(&argType, sizeof(int));
+        serverSocket->readMessage();
+
+        DEBUG_MSG("done sending arg " << i);
+
     }
     
     //retreive results

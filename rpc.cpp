@@ -209,7 +209,7 @@ int rpcCall(char* name, int* argTypes, void** args){
     
     serverSocket->writeMessage(TYPE_CLIENT_SERVER_MESSAGE, strlen(TYPE_CLIENT_SERVER_MESSAGE));
     
-    DEBUG_MSG("first msg sent");
+    DEBUG_MSG("type sent");
 
     serverSocket->readMessage();
     serverSocket->writeMessage(CONTENT_TYPE_EXECUTE, strlen(CONTENT_TYPE_EXECUTE));
@@ -219,9 +219,90 @@ int rpcCall(char* name, int* argTypes, void** args){
     serverSocket->writeMessage(argTypes, sizeof(argTypes));
     serverSocket->readMessage();
     
+    DEBUG_MSG("Sending args for remote procedure: " << name);
+    
     int length = getArgLength(argTypes);
 
+    DEBUG_MSG("arg length: " << length);
+    
     //send args
+    for(int i = 0; i < length; i++){
+        
+        DEBUG_MSG("sending arg " << i);
+        
+        //determine arg type
+        int argType = argTypes[i];
+        
+        //determine if input, output or both (I guess this means whether it's a pointer or not)
+        int io = argType >> ARG_OUTPUT;
+        switch(io){
+            case 0:
+                //none
+                DEBUG_MSG("arg is none");
+
+                break;
+            case 1:
+                //input
+                DEBUG_MSG("arg is input");
+
+                break;
+            case 2:
+                //output
+                DEBUG_MSG("arg is output");
+
+                break;
+            case 3:
+                //both
+                DEBUG_MSG("arg is both");
+
+                break;
+            default:
+                DEBUG_MSG("error in detecting io");
+                
+                break;
+        }
+        
+        //determine if argument is scalar or array
+        int length = 65535 & argType;
+        if(length == 0){
+            DEBUG_MSG("arg is scalar");
+
+        }else if(length > 0){
+            DEBUG_MSG("arg is array: " << length);
+
+        }else{
+            DEBUG_MSG("error, arg length is negative: " << length);
+
+        }
+        
+        //send argument(s) to the server
+        switch(argType){
+            case ARG_CHAR:
+                
+                break;
+                
+            case ARG_SHORT:
+                
+                break;
+                
+            case ARG_INT:
+                
+                break;
+                
+            case ARG_LONG:
+                
+                break;
+                
+            case ARG_DOUBLE:
+                
+                break;
+                
+            case ARG_FLOAT:
+                
+                break;
+        }
+        
+    }
     
     //retreive results
     

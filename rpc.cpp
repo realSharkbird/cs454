@@ -26,6 +26,7 @@ using namespace std;
 
 Socket * binderSocket;
 Socket * clientSocket;
+Socket * serverSocket;
 
 std::map<skeleton, Location*>* localDatabase;
 
@@ -118,10 +119,17 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
 //3rd function called by server
 int rpcExecute(){
     
+    cout << "rpc execute called" << endl;
+    
     while(true){
+        
+        clientSocket->listenForConnection();
+        
         //wait and receive requests
         char* type = clientSocket->readMessage();
 
+        cout << "received rpc call from a client" << endl;
+        
         //check request
         if(strcmp(type, TYPE_CLIENT_SERVER_MESSAGE) == 0){
             clientSocket->writeMessage((void*)"Ack", 4);
@@ -183,12 +191,31 @@ int rpcCall(char* name, int* argTypes, void** args){
     cout << "server address: " << SERVER_ADDRESS << endl;
     cout << "server port: " << SERVER_PORT << endl;
 
+    binderSocket->closeSocket();
+    
+    cout << "sending rpc call to server" << endl;
+    
     //Send an execute-request message to the server
+    serverSocket = new Socket(SERVER_ADDRESS, SERVER_PORT);
+    
+    cout << "server socket initiated" << endl;
+    
+    serverSocket->writeMessage(TYPE_CLIENT_SERVER_MESSAGE, strlen(TYPE_CLIENT_SERVER_MESSAGE));
+    
+    cout << "first msg sent" << endl;
+
+    serverSocket->readMessage();
+    serverSocket->writeMessage(CONTENT_TYPE_EXECUTE, strlen(CONTENT_TYPE_EXECUTE));
+    serverSocket->readMessage();
+    serverSocket->writeMessage(name, sizeof(name));
+    serverSocket->readMessage();
+    serverSocket->writeMessage(argTypes, sizeof(argTypes));
+    serverSocket->readMessage();
+    
+    //send args
     
     //retreive results
     
-    binderSocket->closeSocket();
-
 };
 
 //called by client

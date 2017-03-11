@@ -42,17 +42,22 @@ void readBinder(){
 //first called by server
 int rpcInit(){
     
+    //create a socket for accepting connections from clients
     clientSocket = new Socket();
     clientSocket->printLocation("SERVER");
     
+    //no need to open connection to the binder from the start
+    /*char* BINDER_ADDRESS = getenv("BINDER_ADDRESS");
+    *char* BINDER_PORT = getenv("BINDER_PORT");
+    *binderSocket = new Socket(BINDER_ADDRESS, BINDER_PORT);
+    */
+    
+    //init local database
     localDatabase = new std::map<skeleton, Location*>();
     
-    //create a connection socket for accepting connections from clients
+    //create threads to enable binder and client connections to run in parallel
     std::thread t1(readClient);
-    
-    //Open a connection to the binder
     std::thread t2(readBinder);
-
     t1.join();
     t2.join();
     
@@ -78,7 +83,8 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
     char* BINDER_PORT = getenv("BINDER_PORT");
     
     //create socket
-    Socket * s = new Socket(BINDER_ADDRESS, BINDER_PORT);
+    binderSocket = new Socket(BINDER_ADDRESS, BINDER_PORT);
+    Socket * s = binderSocket;
     
     //call the binder, inform it that a server procedure with the corresponding arguments are available at this server
     s->writeMessage(TYPE_SERVER_BINDER_MESSAGE, strlen(TYPE_SERVER_BINDER_MESSAGE));
@@ -112,13 +118,35 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
 //3rd function called by server
 int rpcExecute(){
     
-    //wait and receive requests
-    
-    //forward requests to skeletons
-    
-    //send back results
-    //Send back procedure result (eg. success fail)
-    //Send back modified arg values
+    while(true){
+        //wait and receive requests
+        char* type = clientSocket->readMessage();
+
+        //check request
+        if(strcmp(type, TYPE_CLIENT_SERVER_MESSAGE) == 0){
+            clientSocket->writeMessage((void*)"Ack", 4);
+            type = clientSocket->readMessage();
+            if(strcmp(type, CONTENT_TYPE_EXECUTE) == 0){
+                clientSocket->writeMessage((void*)"Ack", 4);
+
+                char* name = clientSocket->readMessage();
+                clientSocket->writeMessage((void*)"Ack", 4);
+                int* argTypes = (int*)clientSocket->readMessage();
+                clientSocket->writeMessage((void*)"Ack", 4);
+                
+                //read args
+                void** args;
+                
+                //forward requests to skeletons
+                //skeleton f = localDatabase.get();
+                
+                //send back results
+                //Send back procedure result (eg. success fail)
+                //Send back modified arg values
+                
+            }
+        }
+    }
     
     return SUCCESS;
 };

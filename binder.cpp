@@ -65,6 +65,7 @@ int main(){
             cout << "registered procedure " << str << " from server" << endl;
             cout << "with ip: " << location->ip << " and port: "<< location->port << endl;
 
+        //termination request
         }else if(strcmp(type, TYPE_TERMINATE_MESSAGE) == 0){
             
             s->closeSocket();

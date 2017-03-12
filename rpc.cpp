@@ -27,7 +27,7 @@ using namespace std;
 
 Socket * binderSocket;
 Socket * clientSocket;
-Socket * serverSocket;
+//Socket * serverSocket;
 
 std::map<skeleton, Location*>* localDatabase;
 
@@ -310,12 +310,20 @@ int rpcExecute(){
                     DEBUG_MSG("forwarding request to f4");
                     result = f4_Skel(argTypes, args);
                 }
-                
+
                 DEBUG_MSG("result of procedure: " << result);
-                
-                //Send back procedure result (eg. success fail)
-                
-                DEBUG_MSG("sending back result args " << result);
+
+                if (result == 0) {
+                    clientSocket->writeMessage(CONTENT_TYPE_EXECUTE_SUCCESS, strlen(CONTENT_TYPE_EXECUTE_SUCCESS));
+                    clientSocket->readMessage();
+
+                    //Send back procedure result (eg. success fail)
+
+                    DEBUG_MSG("sending back result args " << result);
+                } else {
+                    clientSocket->writeMessage(CONTENT_TYPE_EXECUTE_FAILURE, strlen(CONTENT_TYPE_EXECUTE_FAILURE));
+                    clientSocket->readMessage();
+                }
 
                 //send back results
                 //Send back modified arg values
@@ -366,7 +374,7 @@ int rpcCall(char* name, int* argTypes, void** args){
     DEBUG_MSG("sending rpc call to server");
     
     //Send an execute-request message to the server
-    serverSocket = new Socket(SERVER_ADDRESS, SERVER_PORT);
+    Socket * serverSocket = new Socket(SERVER_ADDRESS, SERVER_PORT);
     
     DEBUG_MSG("server socket initiated");
     
@@ -476,6 +484,14 @@ int rpcCall(char* name, int* argTypes, void** args){
     }
     
     //retreive results
+    char* response = serverSocket->readMessage();
+    serverSocket->writeMessage((void*)"Ack", 4);
+
+    if (strcmp(response, CONTENT_TYPE_EXECUTE_SUCCESS) == 0) {
+
+    } else {
+
+    }
     
 };
 

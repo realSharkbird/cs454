@@ -17,7 +17,7 @@
 #include <cassert>
 #include <netdb.h>
 #include "Socket.h"
-#include "message.h"
+#include "utils.h"
 
 using namespace std;
 

@@ -1,7 +1,9 @@
 #include <string>
 #include <stdlib.h>
+#include "rpc.h"
 
-//class for messaging protocols
+//the purpose of this file is to make things easier
+
 //types of messages
 extern char* TYPE_SERVER_BINDER_MESSAGE;
 extern char* TYPE_CLIENT_BINDER_MESSAGE;
@@ -28,11 +30,46 @@ extern char* CONTENT_TYPE_TERMINATE;
 #define DEBUG_MSG(str) do { } while ( false )
 #endif
 
-class Message{
-    
-public:
-    int length, type, content_type;
-    char* content;
-    Message(int, char*);
-    
+//make it easier to get typenames
+template <typename T>
+class Foo
+{ };
+
+template <int N>
+struct select_type;
+
+template<>
+struct select_type<ARG_CHAR>
+{
+    typedef char type;
+};
+
+template<>
+struct select_type<ARG_SHORT>
+{
+    typedef short type;
+};
+
+template<>
+struct select_type<ARG_INT>
+{
+    typedef int type;
+};
+
+template<>
+struct select_type<ARG_LONG>
+{
+    typedef long type;
+};
+
+template<>
+struct select_type<ARG_DOUBLE>
+{
+    typedef double type;
+};
+
+template<>
+struct select_type<ARG_FLOAT>
+{
+    typedef float type;
 };

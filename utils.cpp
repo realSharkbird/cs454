@@ -1,4 +1,4 @@
-#include "message.h"
+#include "utils.h"
 #include <string>
 
 using namespace std;
@@ -20,9 +20,3 @@ char* CONTENT_TYPE_EXECUTE = "4";
 char* CONTENT_TYPE_EXECUTE_SUCCESS = "5";
 char* CONTENT_TYPE_EXECUTE_FAILURE = "6";
 char* CONTENT_TYPE_TERMINATE = "7";
-
-Message::Message(int length, char* content){
-    this->length = length;
-    this->content = content;
-    
-}

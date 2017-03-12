@@ -12,7 +12,7 @@
 #include <iostream>
 #include <cassert>
 #include "Socket.h"
-#include "message.h"
+#include "utils.h"
 #include "binder.h"
 
 using namespace std;

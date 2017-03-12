@@ -12,11 +12,12 @@
 #include <queue>
 #include <thread>
 #include "Socket.h"
-#include "message.h"
+#include "utils.h"
 #include <map>
 #include <cassert>
 #include <cstring>
 #include "binder.h"
+#include "server_function_skels.h"
 
 const static int SUCCESS = 0;
 const static int ERROR = -1;
@@ -136,16 +137,8 @@ int getArgSize(int argType){
         default:
             DEBUG_MSG("error detecting argType");
             return 0;
-
+            
     }
-}
-
-int getTotalArgSize(int* argTypes){
-    int size = 0;
-    for(int i = 0; i < getNumArgs(argTypes); i++){
-        size += getArgSize(argTypes[i]);
-    }
-    return size;
 }
 
 //thread for connection to clients
@@ -280,16 +273,51 @@ int rpcExecute(){
                     DEBUG_MSG("received arg type: " << argType);
                     
                     //read args
-                    
-                    
-                    //args[i] =
+                    if(argLength == 0){
+                        args[i] = clientSocket->readMessage();
+                        clientSocket->writeMessage((void*)"Ack", 4);
 
+                    }else{
+                        void** array = (void **)malloc(argLength * sizeof(void *));;
+                        for(int k = 0; k < argLength; k++){
+                            array[k] = clientSocket->readMessage();
+                            clientSocket->writeMessage((void*)"Ack", 4);
+
+                        }
+                        args[i] = array;
+                    }
+                    
                 }
-                //forward requests to skeletons
-                //skeleton f = localDatabase.get();
                 
-                //send back results
+                //read ack from client
+                clientSocket->readMessage();
+                
+                //forward requests to skeletons
+                int result = 0;
+                if(name == "f0"){
+                    DEBUG_MSG("forwarding request to f0");
+                    result = f0_Skel(argTypes, args);
+                }else if(name == "f1"){
+                    DEBUG_MSG("forwarding request to f1");
+                    result = f1_Skel(argTypes, args);
+                }else if(name == "f2"){
+                    DEBUG_MSG("forwarding request to f2");
+                    result = f2_Skel(argTypes, args);
+                }else if(name == "f3"){
+                    DEBUG_MSG("forwarding request to f3");
+                    result = f3_Skel(argTypes, args);
+                }else if(name == "f4"){
+                    DEBUG_MSG("forwarding request to f4");
+                    result = f4_Skel(argTypes, args);
+                }
+                
+                DEBUG_MSG("result of procedure: " << result);
+                
                 //Send back procedure result (eg. success fail)
+                
+                DEBUG_MSG("sending back result args " << result);
+
+                //send back results
                 //Send back modified arg values
                 
             }
@@ -382,6 +410,54 @@ int rpcCall(char* name, int* argTypes, void** args){
         serverSocket->writeMessage(&argType, sizeof(int));
         serverSocket->readMessage();
 
+        for(int k = 0; k < argLength; k++){
+            if(argLength == 0){
+                serverSocket->writeMessage(args[k], getArgSize(argType));
+                serverSocket->readMessage();
+                
+            }else{
+                for(int j = 0; j < argLength; j++){
+                    
+                    //gotta do this cuz no reflection in c++
+                    switch(argType){
+                        case ARG_CHAR:
+                            DEBUG_MSG("arg is char");
+                            serverSocket->writeMessage(&(((char*)args[k])[j]), getArgSize(argType));
+                            
+                        case ARG_SHORT:
+                            DEBUG_MSG("arg is short");
+                            serverSocket->writeMessage(&(((short*)args[k])[j]), getArgSize(argType));
+                            
+                        case ARG_INT:
+                            DEBUG_MSG("arg is int");
+                            serverSocket->writeMessage(&(((int*)args[k])[j]), getArgSize(argType));
+                            
+                        case ARG_LONG:
+                            DEBUG_MSG("arg is long");
+                            serverSocket->writeMessage(&(((long*)args[k])[j]), getArgSize(argType));
+                            
+                        case ARG_DOUBLE:
+                            DEBUG_MSG("arg is double");
+                            serverSocket->writeMessage(&(((double*)args[k])[j]), getArgSize(argType));
+                            
+                        case ARG_FLOAT:
+                            DEBUG_MSG("arg is float");
+                            serverSocket->writeMessage(&(((float*)args[k])[j]), getArgSize(argType));
+                            
+                        default:
+                            DEBUG_MSG("error detecting argType");
+                            return 0;
+                            
+                    }
+                    
+                    serverSocket->readMessage();
+                    
+                }
+            }
+        }
+        
+        clientSocket->writeMessage((void*)"Ack", 4);
+        
         DEBUG_MSG("done sending arg " << i);
 
     }

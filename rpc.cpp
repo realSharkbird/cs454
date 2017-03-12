@@ -123,48 +123,41 @@ void writeArgs(Socket* serverSocket, int* argTypes, void** args){
         //determine typename
         int type = getArgType(argType);
         DEBUG_MSG("type: " << type);
-
+            
+        //serverSocket->writeMessage(args[i], sizeof(char));
+        
         if(argLength == 0){
-            
-            DEBUG_MSG("sending arg");
-            serverSocket->writeMessage(args[i], getArgSize(argType));
-            serverSocket->readMessage();
-            
-        }else{
-            
-            for(int j = 0; j < argLength; j++){
-                
-                //gotta do this cuz no reflection in c++
-                switch(type){
-                    case ARG_CHAR:
-                        serverSocket->writeMessage(&(((char*)args[i])[j]), sizeof(char));
-                        break;
-                    case ARG_SHORT:
-                        serverSocket->writeMessage(&(((short*)args[i])[j]), sizeof(short));
-                        break;
-                    case ARG_INT:
-                        serverSocket->writeMessage(&(((int*)args[i])[j]), sizeof(int));
-                        break;
-                    case ARG_LONG:
-                        serverSocket->writeMessage(&(((long*)args[i])[j]), sizeof(long));
-                        break;
-                    case ARG_DOUBLE:
-                        serverSocket->writeMessage(&(((double*)args[i])[j]), sizeof(double));
-                        break;
-                    case ARG_FLOAT:
-                        serverSocket->writeMessage(&(((float*)args[i])[j]), sizeof(float));
-                        break;
-                    default:
-                        DEBUG_MSG("error detecting argType: " << type);
-                        break;
-                        
-                }
-                
-                serverSocket->readMessage();
-
-            }
-            
+            argLength = 1;
         }
+        
+        //gotta do this cuz no reflection in c++
+        switch(type){
+            case ARG_CHAR:
+                serverSocket->writeMessage(args[i], sizeof(char) * argLength);
+                break;
+            case ARG_SHORT:
+                serverSocket->writeMessage(args[i], sizeof(short) * argLength);
+                break;
+            case ARG_INT:
+                serverSocket->writeMessage(args[i], sizeof(int) * argLength);
+                break;
+            case ARG_LONG:
+                serverSocket->writeMessage(args[i], sizeof(long) * argLength);
+                break;
+            case ARG_DOUBLE:
+                serverSocket->writeMessage(args[i], sizeof(double) * argLength);
+                break;
+            case ARG_FLOAT:
+                serverSocket->writeMessage(args[i], sizeof(float) * argLength);
+                break;
+            default:
+                DEBUG_MSG("error detecting argType: " << type);
+                break;
+                
+        }
+        
+        serverSocket->readMessage();
+
     }
     serverSocket->writeMessage((void*)"Ack", 4);
     DEBUG_MSG("write arg done. **************************");
@@ -186,6 +179,7 @@ void readArgs(Socket* clientSocket, int** argTypes, void*** args){
     int length = getNumArgs(*argTypes);
     
     //proceed to read args
+    DEBUG_MSG("Allocating memory: " << (length * sizeof(void *)));
     *args = (void **)malloc(length * sizeof(void *));;
     
     for(int i = 0; i < length; i++){
@@ -209,11 +203,39 @@ void readArgs(Socket* clientSocket, int** argTypes, void*** args){
             DEBUG_MSG("read arg");
 
         }else{
-            void** array = (void **)malloc(argLength * sizeof(void *));;
-            for(int k = 0; k < argLength; k++){
-                array[k] = clientSocket->readMessage();
-                clientSocket->writeMessage((void*)"Ack", 4);
+            DEBUG_MSG("Allocating more memory: " << (argLength * sizeof(void *)));
+            
+            void* array;
+            
+            //gotta do this cuz no reflection in c++
+            switch(getArgType((*argTypes)[i])){
+                case ARG_CHAR:
+                    array = (void *)malloc(argLength * sizeof(char));;
+                    break;
+                case ARG_SHORT:
+                    array = (void *)malloc(argLength * sizeof(short));;
+                    break;
+                case ARG_INT:
+                    array = (void *)malloc(argLength * sizeof(int));;
+                    break;
+                case ARG_LONG:
+                    array = (void *)malloc(argLength * sizeof(long));;
+                    break;
+                case ARG_DOUBLE:
+                    array = (void *)malloc(argLength * sizeof(double));;
+                    break;
+                case ARG_FLOAT:
+                    array = (void *)malloc(argLength * sizeof(float));;
+                    break;
+                default:
+                    DEBUG_MSG("error detecting typename");
+                    break;
+                    
             }
+            
+            array = clientSocket->readMessage();
+            clientSocket->writeMessage((void*)"Ack", 4);
+            
             (*args)[i] = array;
         }
         
@@ -440,9 +462,12 @@ int rpcCall(char* name, int* argTypes, void** args){
     //retreive results
     readArgs(serverSocket, &argTypes, &args);
 
+    serverSocket->closeSocket();
+    
+    return SUCCESS;
+    
     //save for now, will incorporate later
     /*
-    serverSocket->closeSocket();
 
         }
         
@@ -473,7 +498,7 @@ int rpcCacheCall(char* name, int* argTypes, void** args){
 
 //called by client to terminate system
 int rpcTerminate(){
-
+    
     //send request to the binder
 
     //binder in turn will inform servers to terminate

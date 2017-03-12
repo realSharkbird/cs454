@@ -36,33 +36,6 @@ int getArgIO(int argType){
     
     int io = (argType >> ARG_OUTPUT) & 3;
     
-    switch(io){
-        case 0:
-            //none
-            DEBUG_MSG("arg is none");
-            
-            break;
-        case 1:
-            //input
-            DEBUG_MSG("arg is input");
-            
-            break;
-        case 2:
-            //output
-            DEBUG_MSG("arg is output");
-            
-            break;
-        case 3:
-            //both
-            DEBUG_MSG("arg is both");
-            
-            break;
-        default:
-            DEBUG_MSG("error in detecting io: " << io);
-            
-            break;
-    }
-    
     return io;
 
 }
@@ -78,17 +51,6 @@ int getArgType(int argType){
 int getArgLength(int argType){
     
     int length = 65535 & argType;
-    
-    if(length == 0){
-        DEBUG_MSG("arg is scalar");
-        
-    }else if(length > 0){
-        DEBUG_MSG("arg is array: " << length);
-        
-    }else{
-        DEBUG_MSG("error, arg length is negative: " << length);
-        
-    }
     
     return length;
 
@@ -139,81 +101,65 @@ int getArgSize(int argType){
 void writeArgs(Socket* serverSocket, int* argTypes, void** args){
     int length = getNumArgs(argTypes);
 
+    DEBUG_MSG("sending argtypes to remote socket");
     serverSocket->writeMessage(argTypes, sizeof(int) * length);
+    DEBUG_MSG("reading ack");
     serverSocket->readMessage();
-    
-    DEBUG_MSG("arg length: " << length);
     
     //send args
     for(int i = 0; i < length; i++){
         
         int argType = argTypes[i];
         
-        DEBUG_MSG("sending arg " << i);
-        
         //determine if input, output or both (I guess this means whether it's a pointer or not)
         int io = getArgIO(argTypes[i]);
+        
+        DEBUG_MSG("sending io: " << io);
         serverSocket->writeMessage(&io, sizeof(int));
         serverSocket->readMessage();
         
         //determine if argument is scalar or array
         int argLength = getArgLength(argTypes[i]);
         
+        DEBUG_MSG("sending array length of arg: " << argLength);
         serverSocket->writeMessage(&argLength, sizeof(int));
         serverSocket->readMessage();
-        
-        DEBUG_MSG("sent arg length");
         
         //determine typename
         int type = getArgType(argTypes[i]);
         
-        DEBUG_MSG("sending arg type");
-        
+        DEBUG_MSG("sending typename of arg: " << type);
         serverSocket->writeMessage(&type, sizeof(int));
         serverSocket->readMessage();
         
         if(argLength == 0){
             
-            DEBUG_MSG("arg length is 0");
-            
+            DEBUG_MSG("sending arg");
             serverSocket->writeMessage(args[i], getArgSize(argType));
-            
-            DEBUG_MSG("arg sent");
-            
             serverSocket->readMessage();
             
-            DEBUG_MSG("server ack received");
-            
         }else{
-            
-            DEBUG_MSG("arg is an array");
             
             for(int j = 0; j < argLength; j++){
                 
                 //gotta do this cuz no reflection in c++
                 switch(type){
                     case ARG_CHAR:
-                        DEBUG_MSG("arg is char");
                         serverSocket->writeMessage(&(((char*)args[i])[j]), sizeof(char));
                         break;
                     case ARG_SHORT:
-                        DEBUG_MSG("arg is short");
                         serverSocket->writeMessage(&(((short*)args[i])[j]), sizeof(short));
                         break;
                     case ARG_INT:
-                        DEBUG_MSG("arg is int");
                         serverSocket->writeMessage(&(((int*)args[i])[j]), sizeof(int));
                         break;
                     case ARG_LONG:
-                        DEBUG_MSG("arg is long");
                         serverSocket->writeMessage(&(((long*)args[i])[j]), sizeof(long));
                         break;
                     case ARG_DOUBLE:
-                        DEBUG_MSG("arg is double");
                         serverSocket->writeMessage(&(((double*)args[i])[j]), sizeof(double));
                         break;
                     case ARG_FLOAT:
-                        DEBUG_MSG("arg is float");
                         serverSocket->writeMessage(&(((float*)args[i])[j]), sizeof(float));
                         break;
                     default:
@@ -223,24 +169,28 @@ void writeArgs(Socket* serverSocket, int* argTypes, void** args){
                 }
                 
                 serverSocket->readMessage();
-                
+
             }
-            DEBUG_MSG("arg sent");
             
         }
-        
-        serverSocket->writeMessage((void*)"Ack", 4);
-        
-        DEBUG_MSG("done sending arg " << i);
-        
     }
+    serverSocket->writeMessage((void*)"Ack", 4);
+    DEBUG_MSG("write arg done.");
+
 }
 
 //read args from remote rocket
 void readArgs(Socket* clientSocket, int* argTypes, void** args){
-    argTypes = (int*)clientSocket->readMessage();
-    clientSocket->writeMessage((void*)"Ack", 4);
     
+    DEBUG_MSG("read arg started.");
+    
+    argTypes = (int*)clientSocket->readMessage();
+    
+    DEBUG_MSG("read argTypes");
+    
+    clientSocket->writeMessage((void*)"Ack", 4);
+    DEBUG_MSG("wrote ack");
+
     int length = getNumArgs(argTypes);
     
     //proceed to read args
@@ -251,37 +201,38 @@ void readArgs(Socket* clientSocket, int* argTypes, void** args){
         //read io
         int io = *(clientSocket->readMessage());
         clientSocket->writeMessage((void*)"Ack", 4);
-        DEBUG_MSG("received io: " << io);
+        DEBUG_MSG("read io: " << io);
         
         //read array or scalar
         int argLength = *(clientSocket->readMessage());
         clientSocket->writeMessage((void*)"Ack", 4);
-        DEBUG_MSG("received array length: " << argLength);
+        DEBUG_MSG("read arg length: " << argLength);
         
         //read argType
         int argType = *(clientSocket->readMessage());
         clientSocket->writeMessage((void*)"Ack", 4);
-        DEBUG_MSG("received arg type: " << argType);
+        DEBUG_MSG("read arg typename: " << argType);
         
         //read args
         if(argLength == 0){
             args[i] = clientSocket->readMessage();
             clientSocket->writeMessage((void*)"Ack", 4);
-            
+            DEBUG_MSG("read arg");
+
         }else{
             void** array = (void **)malloc(argLength * sizeof(void *));;
             for(int k = 0; k < argLength; k++){
                 array[k] = clientSocket->readMessage();
                 clientSocket->writeMessage((void*)"Ack", 4);
-                
             }
             args[i] = array;
         }
         
     }
     
-    //read ack from client
     clientSocket->readMessage();
+    DEBUG_MSG("read arg done.");
+
 }
 
 //thread for connection to clients
@@ -396,7 +347,7 @@ int rpcExecute(){
                 readArgs(clientSocket, argTypes, args);
                 
                 //forward requests to skeletons
-                int result = 0;
+                /*int result = 0;
                 if(name == "f0"){
                     DEBUG_MSG("forwarding request to f0");
                     result = f0_Skel(argTypes, args);
@@ -418,11 +369,13 @@ int rpcExecute(){
                 
                 //Send back procedure result (eg. success fail)
                 
-                DEBUG_MSG("sending back result args " << result);
+                DEBUG_MSG("sending back result args " << result);*/
 
                 //send back results
                 //Send back modified arg values
-                
+                writeArgs(clientSocket, argTypes, args);
+                //clientSocket->writeMessage((void*)"Ack", 4);
+
             }
         }
     }
@@ -486,7 +439,11 @@ int rpcCall(char* name, int* argTypes, void** args){
     writeArgs(serverSocket, argTypes, args);
     
     //retreive results
-    
+    //serverSocket->readMessage();
+    readArgs(serverSocket, argTypes, args);
+
+    serverSocket->closeSocket();
+
 };
 
 //called by client

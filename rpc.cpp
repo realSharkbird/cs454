@@ -27,7 +27,7 @@ using namespace std;
 
 Socket * binderSocket;
 Socket * clientSocket;
-//Socket * serverSocket;
+Socket * serverSocket;
 
 std::map<skeleton, Location*>* localDatabase;
 
@@ -443,7 +443,7 @@ int rpcCall(char* name, int* argTypes, void** args){
     DEBUG_MSG("sending rpc call to server");
     
     //Send an execute-request message to the server
-    Socket * serverSocket = new Socket(SERVER_ADDRESS, SERVER_PORT);
+    serverSocket = new Socket(SERVER_ADDRESS, SERVER_PORT);
     
     DEBUG_MSG("server socket initiated");
     
@@ -473,9 +473,7 @@ int rpcCall(char* name, int* argTypes, void** args){
         
         serverSocket->writeMessage((void*)"Ack", 4);
         
-        DEBUG_MSG("done sending arg " << i);
-
-    }
+//        DEBUG_MSG("done sending arg " << i);
     
     //retreive results
     char* response = serverSocket->readMessage();

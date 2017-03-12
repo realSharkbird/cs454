@@ -356,7 +356,10 @@ int rpcExecute(){
 
                 DEBUG_MSG("result of procedure: " << result);
 
-                if (result == 0) {
+                writeArgs(clientSocket, argTypes, args);
+                
+                //save this for now, will incorporate later
+                /*if (result == 0) {
                     clientSocket->writeMessage(CONTENT_TYPE_EXECUTE_SUCCESS, strlen(CONTENT_TYPE_EXECUTE_SUCCESS));
                     clientSocket->readMessage();
 
@@ -366,7 +369,7 @@ int rpcExecute(){
                 } else {
                     clientSocket->writeMessage(CONTENT_TYPE_EXECUTE_FAILURE, strlen(CONTENT_TYPE_EXECUTE_FAILURE));
                     clientSocket->readMessage();
-                }
+                }*/
 
                 //send back results
                 //Send back modified arg values
@@ -435,9 +438,10 @@ int rpcCall(char* name, int* argTypes, void** args){
     writeArgs(serverSocket, argTypes, args);
     
     //retreive results
-    //serverSocket->readMessage();
     readArgs(serverSocket, &argTypes, &args);
 
+    //save for now, will incorporate later
+    /*
     serverSocket->closeSocket();
 
         }
@@ -456,7 +460,7 @@ int rpcCall(char* name, int* argTypes, void** args){
 
     } else {
 
-    }
+    }*/
     
 };
 

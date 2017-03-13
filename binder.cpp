@@ -155,6 +155,8 @@ int main() {
                 serverLocQueue.pop();
                 database->at(procedure) = serverLocQueue;
 
+                DEBUG_MSG("got location from database");
+                
                 char *ip = new char[serverLoc.ip.length()];
                 char *port = new char[serverLoc.port.length()];
                 strcpy(ip, serverLoc.ip.c_str());

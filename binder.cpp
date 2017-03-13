@@ -149,6 +149,7 @@ int main() {
                 break;
             }
         }
+        delete[] type;
     }
     return 0;
 }

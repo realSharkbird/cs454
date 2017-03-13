@@ -345,6 +345,7 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
     location->ip = SERVER_ADDRESS;
     location->port = SERVER_PORT;
     localDatabase->insert( pair<skeleton,Location*>(f, location) );
+    delete location;
     
     DEBUG_MSG("registered skeleton " << name << " into local db");
     
@@ -439,6 +440,13 @@ int rpcExecute(){
                     clientSocket->readMessage();
                     
                 }
+
+                int length = getNumArgs(argTypes);
+                if (length == 0) length = 1;
+                for (int i = length - 1; i > 0; --i) {
+                    free(args[i]);
+                }
+                free(args);
 
             }
         }

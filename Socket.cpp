@@ -86,7 +86,6 @@ void Socket::listenForConnection(){
 }
 
 char* Socket::getLocationAddress(){
-    char* hostname = new char[MAX_HOSTNAME_LEN];
     gethostname(hostname, MAX_HOSTNAME_LEN);
     
     return hostname;
@@ -94,7 +93,6 @@ char* Socket::getLocationAddress(){
 
 char* Socket::getLocationPort(){
     string portStr = to_string(ntohs(server_address.sin_port));
-    char* port = new char[portStr.length()];
     strcpy(port, portStr.c_str());
     
     return port;
@@ -109,9 +107,9 @@ void Socket::printLocation(string locationName){
 
 //listen for a message and return the address and port of the sender
 char* Socket::readMessage(){
-    
-    char* buffer = new char[MESSAGE_BUFFER_SIZE];
-    
+
+    buffer = new char[MESSAGE_BUFFER_SIZE];
+
     //read message
     bzero(buffer, MESSAGE_BUFFER_SIZE);
     n = read(newSocketDescriptor, buffer, MESSAGE_BUFFER_SIZE);
@@ -122,7 +120,7 @@ char* Socket::readMessage(){
 
 //send a stream of bytes to specified location
 void Socket::writeMessage(void* message, int length){
-    
+
     //send message to location
     n = write(newSocketDescriptor,message,length);
     if (n < 0){

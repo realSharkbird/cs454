@@ -39,49 +39,49 @@ bool Procedure::operator<(const Procedure right) const{
 }
 
 //This binder is the first thing to run
-int main(){
-    
+int main() {
+
     //variables
     database = new std::map<Procedure, std::queue<Location>>();
-    
+
     //create listening socket
-    Socket * s = new Socket();
+    Socket *s = new Socket();
     s->printLocation("BINDER");
 
     //listen for requests
-    while(true){
-        
+    while (true) {
+
         s->listenForConnection();
-        char* type = s->readMessage();
+        char *type = s->readMessage();
 
         DEBUG_MSG("binder received type: " << type);
 
         //server registration request
-        if(strcmp(type, TYPE_SERVER_BINDER_MESSAGE) == 0){
-            
-            s->writeMessage((void*)"Ack", 4);
-            
+        if (strcmp(type, TYPE_SERVER_BINDER_MESSAGE) == 0) {
+
+            s->writeMessage((void *) "Ack", 4);
+
             Location location;
-            
+
             location.ip = s->readMessage();
-            s->writeMessage((void*)"Ack", 4);
-            
+            s->writeMessage((void *) "Ack", 4);
+
             location.port = s->readMessage();
-            s->writeMessage((void*)"Ack", 4);
+            s->writeMessage((void *) "Ack", 4);
 
             Procedure procedure;
-            
+
             procedure.name = s->readMessage();
-            s->writeMessage((void*)"Ack", 4);
-            
-            procedure.argTypes = (int *)s->readMessage();
-            s->writeMessage((void*)"Ack", 4);
+            s->writeMessage((void *) "Ack", 4);
+
+            procedure.argTypes = (int *) s->readMessage();
+            s->writeMessage((void *) "Ack", 4);
 
 
             if (database->find(procedure) == database->end()) {
                 queue<Location> locationQueue;
                 locationQueue.push(location);
-                database->insert( std::pair<Procedure, queue<Location>>(procedure, locationQueue) );
+                database->insert(std::pair<Procedure, queue<Location>>(procedure, locationQueue));
             } else {
                 database->at(procedure).push(location);
             }
@@ -89,37 +89,37 @@ int main(){
 
             string str = procedure.name;
             DEBUG_MSG("registered procedure " << str << " from server");
-            DEBUG_MSG("with ip: " << location.ip << " and port: "<< location.port);
-            
-        }else if(strcmp(type, TYPE_CLIENT_BINDER_MESSAGE) == 0){
-            
-            s->writeMessage((void*)"Ack", 4);
+            DEBUG_MSG("with ip: " << location.ip << " and port: " << location.port);
+
+        } else if (strcmp(type, TYPE_CLIENT_BINDER_MESSAGE) == 0) {
+
+            s->writeMessage((void *) "Ack", 4);
             type = s->readMessage();
 
             //location request from client
-            if(strcmp(type, CONTENT_TYPE_LOC_REQUEST) == 0){
-                
-                DEBUG_MSG("(debug) binder received content type: " << type);
-                
-                s->writeMessage((void*)"Ack", 4);
-                
-                char* name = s->readMessage();
-                s->writeMessage((void*)"Ack", 4);
+            if (strcmp(type, CONTENT_TYPE_LOC_REQUEST) == 0) {
 
-                int* argTypes = (int*)s->readMessage();
-                
+                DEBUG_MSG("(debug) binder received content type: " << type);
+
+                s->writeMessage((void *) "Ack", 4);
+
+                char *name = s->readMessage();
+                s->writeMessage((void *) "Ack", 4);
+
+                int *argTypes = (int *) s->readMessage();
+
                 int i = 0;
-                while(argTypes[i] != 0){
+                while (argTypes[i] != 0) {
                     i++;
                 }
-                
+
                 //create key to find location from database
                 Procedure procedure;
                 procedure.name = name;
                 procedure.argTypes = argTypes;
-                
+
                 DEBUG_MSG("getting location from database");
-                
+
                 //get location from database
                 //locations stored in a queue for round-robin scheduling, each access moves server to back
                 queue<Location> serverLocQueue = database->find(procedure)->second;
@@ -127,29 +127,28 @@ int main(){
                 serverLocQueue.push(serverLoc);
                 serverLocQueue.pop();
                 database->at(procedure) = serverLocQueue;
-                
-                char* ip = new char[serverLoc.ip.length()];
-                char* port = new char[serverLoc.port.length()];
+
+                char *ip = new char[serverLoc.ip.length()];
+                char *port = new char[serverLoc.port.length()];
                 strcpy(ip, serverLoc.ip.c_str());
                 strcpy(port, serverLoc.port.c_str());
-                
+
                 //send location info to client
                 s->writeMessage(ip, strlen(ip));
                 s->readMessage();
                 s->writeMessage(port, strlen(port));
-                
+
                 DEBUG_MSG("Location info sent to client");
-                
+
             }
-            
-        //termination request
-        }else if(strcmp(type, TYPE_TERMINATE_MESSAGE) == 0){
-            
-            s->closeSocket();
-            break;
+
+                //termination request
+            else if (strcmp(type, TYPE_TERMINATE_MESSAGE) == 0) {
+
+                s->closeSocket();
+                break;
+            }
         }
-        
     }
-    
     return 0;
 }

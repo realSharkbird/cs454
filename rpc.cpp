@@ -268,16 +268,6 @@ void readArgs(Socket* clientSocket, int** argTypes, void*** args){
 
 }
 
-//thread for connection to clients
-void readClient(){
-
-}
-
-//thread for connection to the binder
-void readBinder(){
-
-}
-
 //first called by server
 int rpcInit(){
     
@@ -285,20 +275,23 @@ int rpcInit(){
     clientSocket = new Socket();
     clientSocket->printLocation("SERVER");
     
-    //no need to open connection to the binder from the start
-    /*char* BINDER_ADDRESS = getenv("BINDER_ADDRESS");
-    *char* BINDER_PORT = getenv("BINDER_PORT");
-    *binderSocket = new Socket(BINDER_ADDRESS, BINDER_PORT);
-    */
+    //tell binder that server exists
+    char* BINDER_ADDRESS = getenv("BINDER_ADDRESS");
+    char* BINDER_PORT = getenv("BINDER_PORT");
+    binderSocket = new Socket(BINDER_ADDRESS, BINDER_PORT);
+    
+    binderSocket->writeMessage(TYPE_SERVER_BINDER_MESSAGE, strlen(TYPE_SERVER_BINDER_MESSAGE));
+    binderSocket->readMessage();
+    binderSocket->writeMessage(CONTENT_TYPE_INIT, strlen(CONTENT_TYPE_INIT));
+    binderSocket->readMessage();
+    binderSocket->writeMessage(clientSocket->getLocationAddress(), strlen(clientSocket->getLocationAddress()));
+    binderSocket->readMessage();
+    binderSocket->writeMessage(clientSocket->getLocationPort(), strlen(clientSocket->getLocationPort()));
+    binderSocket->readMessage();
+    binderSocket->closeSocket();
     
     //init local database
     localDatabase = new std::map<skeleton, Location*>();
-    
-    //create threads to enable binder and client connections to run in parallel
-    std::thread t1(readClient);
-    std::thread t2(readBinder);
-    t1.join();
-    t2.join();
     
     return SUCCESS;
 };
@@ -322,8 +315,11 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
     binderSocket = new Socket(BINDER_ADDRESS, BINDER_PORT);
     Socket * s = binderSocket;
     
-    //call the binder, inform it that a server procedure with the corresponding arguments are available at this server
     s->writeMessage(TYPE_SERVER_BINDER_MESSAGE, strlen(TYPE_SERVER_BINDER_MESSAGE));
+    s->readMessage();
+    
+    //call the binder, inform it that a server procedure with the corresponding arguments are available at this server
+    s->writeMessage(CONTENT_TYPE_REGISTER, strlen(CONTENT_TYPE_REGISTER));
 
     //wait for binder for acknowledgement
     s->readMessage();
@@ -333,6 +329,9 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
     s->readMessage();
     s->writeMessage(SERVER_PORT, strlen(SERVER_PORT));
     s->readMessage();
+    
+    DEBUG_MSG("sent address and port");
+    
     s->writeMessage(name, strlen(name));
     s->readMessage();
     s->writeMessage(argTypes, length * sizeof(int));
@@ -441,6 +440,20 @@ int rpcExecute(){
                 }
 
             }
+        }else if(strcmp(type, TYPE_SERVER_BINDER_MESSAGE) == 0){
+            
+            clientSocket->writeMessage((void*)"Ack", 4);
+            type = clientSocket->readMessage();
+            
+            if(strcmp(type, TYPE_TERMINATE_MESSAGE) == 0){
+                
+                clientSocket->writeMessage((void*)"Ack", 4);
+                clientSocket->closeSocket();
+                
+                return SUCCESS;
+                
+            }
+            
         }
     }
     
@@ -535,9 +548,18 @@ int rpcCacheCall(char* name, int* argTypes, void** args){
 //called by client to terminate system
 int rpcTerminate(){
     
+    char* BINDER_ADDRESS = getenv("BINDER_ADDRESS");
+    char* BINDER_PORT = getenv("BINDER_PORT");
+    
     //send request to the binder
-
+    binderSocket = new Socket(BINDER_ADDRESS, BINDER_PORT);
+    
     //binder in turn will inform servers to terminate
+    binderSocket->writeMessage(TYPE_CLIENT_BINDER_MESSAGE, strlen(TYPE_CLIENT_BINDER_MESSAGE));
+    binderSocket->readMessage();
+    binderSocket->writeMessage(CONTENT_TYPE_TERMINATE, strlen(CONTENT_TYPE_TERMINATE));
+    
+    binderSocket->closeSocket();
     
     //servers authenticate request by checking binder ip address
     

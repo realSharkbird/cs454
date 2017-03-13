@@ -391,6 +391,7 @@ int rpcExecute(){
                     //return is a single arg of type int
                     argTypes[0] = (1 << ARG_OUTPUT) | (ARG_INT << 16);
                     argTypes[1] = 0;
+                    clientSocket->writeMessage(args[0], sizeof(int));
                     
                 }else if(strcmp(name, "f1") == 0){
                     DEBUG_MSG("forwarding request to f1");
@@ -399,25 +400,38 @@ int rpcExecute(){
                     //return is a single arg of type long
                     argTypes[0] = (1 << ARG_OUTPUT) | (ARG_LONG << 16);
                     argTypes[1] = 0;
+                    clientSocket->writeMessage(args[0], sizeof(long));
                     
                 }else if(strcmp(name, "f2") == 0){
                     DEBUG_MSG("forwarding request to f2");
                     result = f2_Skel(argTypes, args);
                     
+                    int strlength = strlen((char*)(args[0]));
+                    
+                    //return is a single arg of type string
+                    argTypes[0] = (1 << ARG_OUTPUT) | (ARG_CHAR << 16) | strlength;
+                    argTypes[1] = 0;
+                    clientSocket->writeMessage(args[0], strlength);
+                    
                 }else if(strcmp(name, "f3") == 0){
                     DEBUG_MSG("forwarding request to f3");
                     result = f3_Skel(argTypes, args);
+                    
+                    //return is a single arg of type long array
+                    clientSocket->writeMessage(args[0], sizeof(long) * getArgLength(argTypes[0]));
                     
                 }else if(strcmp(name, "f4") == 0){
                     DEBUG_MSG("forwarding request to f4");
                     result = f4_Skel(argTypes, args);
                     
+                    //not actually supposed to return a value
+                    //clientSocket->writeMessage(args[0], getArgLength(argTypes[0]));
+
                 }
 
                 DEBUG_MSG("result of procedure: " << result);
-                writeArgs(clientSocket, argTypes, args);
+                //writeArgs(clientSocket, argTypes, args);
                 
-                //save this for now, will incorporate later
                 /*if (result == 0) {
                     clientSocket->writeMessage(CONTENT_TYPE_EXECUTE_SUCCESS, strlen(CONTENT_TYPE_EXECUTE_SUCCESS));
                     clientSocket->readMessage();
@@ -499,7 +513,9 @@ int rpcCall(char* name, int* argTypes, void** args){
     int* argTypesTemp;
     void** argsTemp;
     //retreive results
-    readArgs(serverSocket, &argTypesTemp, &argsTemp);
+    //readArgs(serverSocket, &argTypesTemp, &argsTemp);
+    
+    void* returnVal = serverSocket->readMessage();
     
     //copy over...
     for(int i = 0; i < length; i++){
@@ -508,7 +524,8 @@ int rpcCall(char* name, int* argTypes, void** args){
     for(int i = 0; i < length - 1; i++){
         args[i] = argsTemp[i];
     }
-    printf("ACTUAL return of f1 is: %ld\n", *((long *)(args[0])));
+    
+    args[0] = returnVal;
 
     serverSocket->closeSocket();
     

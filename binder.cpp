@@ -11,14 +11,15 @@
 #include <map>
 #include <iostream>
 #include <cassert>
+#include <queue>
 #include "Socket.h"
 #include "utils.h"
 #include "binder.h"
 
 using namespace std;
 
-//database for procedures (procedure signature, location)
-std::map<Procedure, Location>* database;
+//database for procedures (procedure signature, queue of locations)
+std::map<Procedure, std::queue<Location>>* database;
 
 //we need this tedious code to make the database work
 bool Procedure::operator<(const Procedure right) const{
@@ -41,7 +42,7 @@ bool Procedure::operator<(const Procedure right) const{
 int main(){
     
     //variables
-    database = new std::map<Procedure, Location>();
+    database = new std::map<Procedure, std::queue<Location>>();
     
     //create listening socket
     Socket * s = new Socket();
@@ -76,8 +77,16 @@ int main(){
             procedure.argTypes = (int *)s->readMessage();
             s->writeMessage((void*)"Ack", 4);
 
-            database->insert( std::pair<Procedure,Location>(procedure, location) );
-            
+
+            if (database->find(procedure) == database->end()) {
+                queue<Location> locationQueue;
+                locationQueue.push(location);
+                database->insert( std::pair<Procedure, queue<Location>>(procedure, locationQueue) );
+            } else {
+                database->at(procedure).push(location);
+            }
+
+
             string str = procedure.name;
             DEBUG_MSG("registered procedure " << str << " from server");
             DEBUG_MSG("with ip: " << location.ip << " and port: "<< location.port);
@@ -112,7 +121,12 @@ int main(){
                 DEBUG_MSG("getting location from database");
                 
                 //get location from database
-                Location serverLoc = database->find(procedure)->second;
+                //locations stored in a queue for round-robin scheduling, each access moves server to back
+                queue<Location> serverLocQueue = database->find(procedure)->second;
+                Location serverLoc = serverLocQueue.front();
+                serverLocQueue.push(serverLoc);
+                serverLocQueue.pop();
+                database->at(procedure) = serverLocQueue;
                 
                 char* ip = new char[serverLoc.ip.length()];
                 char* port = new char[serverLoc.port.length()];

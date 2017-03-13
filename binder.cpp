@@ -24,30 +24,12 @@ std::map<Procedure, std::queue<Location>>* database;
 //list of connected servers
 std::queue<Location> servers;
 
-int compareIntArray(int* array1, int* array2){
-    int i = 0;
-    while(array1[i] != 0 && array2[i] != 0){
-        if(array1[i] < array2[i]){
-            return -1;
-        }else if(array1[i] > array2[i]){
-            return 1;
-        }
-        i++;
-    }
-    if(array1[i] == 0 && array2[i] == 0){
-        return 0;
-    }else if(array1[i] == 0){
-        return -1;
-    }
-    return 1;
-}
-
 //we need this tedious code to make the database work
 bool Procedure::operator<(const Procedure right) const{
     
     if(strcmp(name, right.name) == 0){
         
-        bool result = (compareIntArray(argTypes,right.argTypes) < 0);
+        bool result = (strcmp((char*)argTypes, (char*)right.argTypes) < 0);
         
         return result;
         

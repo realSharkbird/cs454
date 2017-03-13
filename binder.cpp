@@ -24,12 +24,30 @@ std::map<Procedure, std::queue<Location>>* database;
 //list of connected servers
 std::queue<Location> servers;
 
+int compareIntArray(int* array1, int* array2){
+    int i = 0;
+    while(array1[i] != 0 && array2[i] != 0){
+        if(array1[i] < array2[i]){
+            return -1;
+        }else if(array1[i] > array2[i]){
+            return 1;
+        }
+        i++;
+    }
+    if(array1[i] == 0 && array2[i] == 0){
+        return 0;
+    }else if(array1[i] == 0){
+        return -1;
+    }
+    return 1;
+}
+
 //we need this tedious code to make the database work
 bool Procedure::operator<(const Procedure right) const{
     
     if(strcmp(name, right.name) == 0){
         
-        bool result = (strcmp((char*)argTypes,(char*)right.argTypes) < 0);
+        bool result = (compareIntArray(argTypes,right.argTypes) < 0);
         
         return result;
         
@@ -88,9 +106,6 @@ int main() {
                 procedure.argTypes = (int *)s->readMessage();
                 s->writeMessage((void*)"Ack", 4);
 
-            procedure.argTypes = (int *) s->readMessage();
-            s->writeMessage((void *) "Ack", 4);
-
                 if (database->find(procedure) == database->end()) {
                     queue<Location> locationQueue;
                     locationQueue.push(location);
@@ -145,10 +160,19 @@ int main() {
                 procedure.name = name;
                 procedure.argTypes = argTypes;
 
+                DEBUG_MSG("received name " << name);
+                DEBUG_MSG("received argtype " << argTypes[0]);
+                
                 DEBUG_MSG("getting location from database");
 
                 //get location from database
                 //locations stored in a queue for round-robin scheduling, each access moves server to back
+                
+                if(database == NULL){
+                    DEBUG_MSG("null database");
+
+                }
+                
                 queue<Location> serverLocQueue = database->find(procedure)->second;
                 Location serverLoc = serverLocQueue.front();
                 serverLocQueue.push(serverLoc);

@@ -122,7 +122,7 @@ void writeArgs(Socket* serverSocket, int* argTypes, void** args){
 
         //determine typename
         int type = getArgType(argType);
-        DEBUG_MSG("type: " << type);
+        DEBUG_MSG("writing type: " << type);
             
         //serverSocket->writeMessage(args[i], sizeof(char));
         
@@ -133,22 +133,33 @@ void writeArgs(Socket* serverSocket, int* argTypes, void** args){
         //gotta do this cuz no reflection in c++
         switch(type){
             case ARG_CHAR:
-                serverSocket->writeMessage(args[i], sizeof(char) * argLength);
+                serverSocket->writeMessage((char*)(args[i]), sizeof(char) * argLength);
+                DEBUG_MSG("WRITING CHAR: " << *((char *)(args[i])));
+
                 break;
             case ARG_SHORT:
-                serverSocket->writeMessage(args[i], sizeof(short) * argLength);
+                serverSocket->writeMessage((short*)(args[i]), sizeof(short) * argLength);
+                DEBUG_MSG("WRITING SHORT: " << *((short *)(args[i])));
+
                 break;
             case ARG_INT:
-                serverSocket->writeMessage(args[i], sizeof(int) * argLength);
+                serverSocket->writeMessage((int*)(args[i]), sizeof(int) * argLength);
+                DEBUG_MSG("WRITING INT: " << *((int *)(args[i])));
+
                 break;
             case ARG_LONG:
-                serverSocket->writeMessage(args[i], sizeof(long) * argLength);
+                serverSocket->writeMessage((long*)(args[i]), sizeof(long) * argLength);
+                DEBUG_MSG("WRITING LONG: " << *((long *)(args[i])));
                 break;
             case ARG_DOUBLE:
-                serverSocket->writeMessage(args[i], sizeof(double) * argLength);
+                serverSocket->writeMessage((double*)(args[i]), sizeof(double) * argLength);
+                DEBUG_MSG("WRITING DOUBLE: " << *((double *)(args[i])));
+
                 break;
             case ARG_FLOAT:
-                serverSocket->writeMessage(args[i], sizeof(float) * argLength);
+                serverSocket->writeMessage((float*)(args[i]), sizeof(float) * argLength);
+                DEBUG_MSG("WRITING FLOAT: " << *((float *)(args[i])));
+
                 break;
             default:
                 DEBUG_MSG("error detecting argType: " << type);
@@ -194,50 +205,61 @@ void readArgs(Socket* clientSocket, int** argTypes, void*** args){
         
         //read argType
         int argType = getArgType((*argTypes)[i]);
-        DEBUG_MSG("arg typename: " << argType);
+        DEBUG_MSG("reading type: " << argType);
         
         //read args
         if(argLength == 0){
-            (*args)[i] = clientSocket->readMessage();
-            clientSocket->writeMessage((void*)"Ack", 4);
-            DEBUG_MSG("read arg");
+            
+            argLength = 1;
 
-        }else{
-            DEBUG_MSG("Allocating more memory: " << (argLength * sizeof(void *)));
-            
-            void* array;
-            
-            //gotta do this cuz no reflection in c++
-            switch(getArgType((*argTypes)[i])){
-                case ARG_CHAR:
-                    array = (void *)malloc(argLength * sizeof(char));;
-                    break;
-                case ARG_SHORT:
-                    array = (void *)malloc(argLength * sizeof(short));;
-                    break;
-                case ARG_INT:
-                    array = (void *)malloc(argLength * sizeof(int));;
-                    break;
-                case ARG_LONG:
-                    array = (void *)malloc(argLength * sizeof(long));;
-                    break;
-                case ARG_DOUBLE:
-                    array = (void *)malloc(argLength * sizeof(double));;
-                    break;
-                case ARG_FLOAT:
-                    array = (void *)malloc(argLength * sizeof(float));;
-                    break;
-                default:
-                    DEBUG_MSG("error detecting typename");
-                    break;
-                    
-            }
-            
-            array = clientSocket->readMessage();
-            clientSocket->writeMessage((void*)"Ack", 4);
-            
-            (*args)[i] = array;
         }
+        
+        DEBUG_MSG("Allocating more memory: " << (argLength * sizeof(void *)));
+        
+        //gotta do this cuz no reflection in c++
+        switch(getArgType((*argTypes)[i])){
+            case ARG_CHAR:
+                (*args)[i] = (char *)malloc(argLength * sizeof(char));
+                (*args)[i] = (char *)(clientSocket->readMessage());
+                DEBUG_MSG("READING CHAR: " << *((char *)((*args)[i])));
+
+                break;
+            case ARG_SHORT:
+                (*args)[i] = (short *)malloc(argLength * sizeof(short));
+                (*args)[i] = (short *)(clientSocket->readMessage());
+                DEBUG_MSG("READING SHORT: " << *((short *)((*args)[i])));
+
+                break;
+            case ARG_INT:
+                (*args)[i] = (int *)malloc(argLength * sizeof(int));
+                (*args)[i] = (int *)(clientSocket->readMessage());
+                DEBUG_MSG("READING INT: " << *((int *)((*args)[i])));
+
+                break;
+            case ARG_LONG:
+                (*args)[i] = (long *)malloc(argLength * sizeof(long));
+                (*args)[i] = (long *)(clientSocket->readMessage());
+                DEBUG_MSG("READING LONG: " << *((long *)((*args)[i])));
+                break;
+            case ARG_DOUBLE:
+                (*args)[i] = (double *)malloc(argLength * sizeof(double));
+                (*args)[i] = (double *)(clientSocket->readMessage());
+                DEBUG_MSG("READING DOUBLE: " << *((double *)((*args)[i])));
+
+                break;
+            case ARG_FLOAT:
+                (*args)[i] = (float *)malloc(argLength * sizeof(float));
+                (*args)[i] = (float *)(clientSocket->readMessage());
+                DEBUG_MSG("READING FLOAT: " << *((float *)((*args)[i])));
+
+                break;
+            default:
+                DEBUG_MSG("error detecting typename");
+                break;
+            
+        }
+        
+        clientSocket->writeMessage((void*)"Ack", 4);
         
     }
     
@@ -359,25 +381,40 @@ int rpcExecute(){
 
                 //forward requests to skeletons
                 int result = 0;
-                if(name == "f0"){
+                
+                DEBUG_MSG("name of procedure: " << name);
+                
+                if(strcmp(name, "f0") == 0){
                     DEBUG_MSG("forwarding request to f0");
                     result = f0_Skel(argTypes, args);
-                }else if(name == "f1"){
+                    
+                    //return is a single arg of type int
+                    argTypes[0] = (1 << ARG_OUTPUT) | (ARG_INT << 16);
+                    argTypes[1] = 0;
+                    
+                }else if(strcmp(name, "f1") == 0){
                     DEBUG_MSG("forwarding request to f1");
                     result = f1_Skel(argTypes, args);
-                }else if(name == "f2"){
+                    
+                    //return is a single arg of type long
+                    argTypes[0] = (1 << ARG_OUTPUT) | (ARG_LONG << 16);
+                    argTypes[1] = 0;
+                    
+                }else if(strcmp(name, "f2") == 0){
                     DEBUG_MSG("forwarding request to f2");
                     result = f2_Skel(argTypes, args);
-                }else if(name == "f3"){
+                    
+                }else if(strcmp(name, "f3") == 0){
                     DEBUG_MSG("forwarding request to f3");
                     result = f3_Skel(argTypes, args);
-                }else if(name == "f4"){
+                    
+                }else if(strcmp(name, "f4") == 0){
                     DEBUG_MSG("forwarding request to f4");
                     result = f4_Skel(argTypes, args);
+                    
                 }
 
                 DEBUG_MSG("result of procedure: " << result);
-
                 writeArgs(clientSocket, argTypes, args);
                 
                 //save this for now, will incorporate later
@@ -459,8 +496,19 @@ int rpcCall(char* name, int* argTypes, void** args){
     DEBUG_MSG("Sending args for remote procedure: " << name);
     writeArgs(serverSocket, argTypes, args);
     
+    int* argTypesTemp;
+    void** argsTemp;
     //retreive results
-    readArgs(serverSocket, &argTypes, &args);
+    readArgs(serverSocket, &argTypesTemp, &argsTemp);
+    
+    //copy over...
+    for(int i = 0; i < length; i++){
+        argTypes[i] = argTypesTemp[i];
+    }
+    for(int i = 0; i < length - 1; i++){
+        args[i] = argsTemp[i];
+    }
+    printf("ACTUAL return of f1 is: %ld\n", *((long *)(args[0])));
 
     serverSocket->closeSocket();
     

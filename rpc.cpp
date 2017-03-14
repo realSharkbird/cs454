@@ -416,61 +416,67 @@ int rpcExecute(){
 
 //called by client
 int rpcCall(char* name, int* argTypes, void** args){
-    
+
     int length = getNumArgs(argTypes);
-    
+
     char* BINDER_ADDRESS = getenv("BINDER_ADDRESS");
     char* BINDER_PORT = getenv("BINDER_PORT");
-    
+
     //send a location request message to the binder to locate the server for the procedure
     binderSocket = new Socket(BINDER_ADDRESS, BINDER_PORT);
     binderSocket->writeMessage(TYPE_CLIENT_BINDER_MESSAGE, strlen(TYPE_CLIENT_BINDER_MESSAGE));
     binderSocket->readMessage();
     binderSocket->writeMessage(CONTENT_TYPE_LOC_REQUEST, strlen(CONTENT_TYPE_LOC_REQUEST));
     binderSocket->readMessage();
-    
+
     //send procedure
     binderSocket->writeMessage(name, strlen(name));
     binderSocket->readMessage();
     binderSocket->writeMessage(argTypes, sizeof(int) * length);
-    
-    char* SERVER_ADDRESS = binderSocket->readMessage();
-    binderSocket->writeMessage((void*)"Ack", 4);
-    char* SERVER_PORT = binderSocket->readMessage();
 
-    binderSocket->closeSocket();
-    
-    //Send an execute-request message to the server
-    serverSocket = new Socket(SERVER_ADDRESS, SERVER_PORT);
-    
-    serverSocket->writeMessage(TYPE_CLIENT_SERVER_MESSAGE, strlen(TYPE_CLIENT_SERVER_MESSAGE));
-    
-    serverSocket->readMessage();
-    serverSocket->writeMessage(CONTENT_TYPE_EXECUTE, strlen(CONTENT_TYPE_EXECUTE));
-    serverSocket->readMessage();
-    serverSocket->writeMessage(name, strlen(name));
-    serverSocket->readMessage();
-    
-    //send args to server to execute
-    writeArgs(serverSocket, argTypes, args);
+    char* response = binderSocket->readMessage();
 
-    //retreive results
-    char* response = serverSocket->readMessage();
-    serverSocket->writeMessage((void*)"Ack", 4);
+    if (strcmp(response, CONTENT_TYPE_LOC_SUCCESS) == 0) {
 
-    if (strcmp(response, CONTENT_TYPE_EXECUTE_SUCCESS) == 0) {
+        char *SERVER_ADDRESS = binderSocket->readMessage();
+        binderSocket->writeMessage((void *) "Ack", 4);
+        char *SERVER_PORT = binderSocket->readMessage();
+
+        binderSocket->closeSocket();
+
+        //Send an execute-request message to the server
+        serverSocket = new Socket(SERVER_ADDRESS, SERVER_PORT);
+
+        serverSocket->writeMessage(TYPE_CLIENT_SERVER_MESSAGE, strlen(TYPE_CLIENT_SERVER_MESSAGE));
+
+        serverSocket->readMessage();
+        serverSocket->writeMessage(CONTENT_TYPE_EXECUTE, strlen(CONTENT_TYPE_EXECUTE));
+        serverSocket->readMessage();
+        serverSocket->writeMessage(name, strlen(name));
+        serverSocket->readMessage();
+
+        //send args to server to execute
+        writeArgs(serverSocket, argTypes, args);
+
         //retreive results
-        args[0] = serverSocket->readMessage();
-        serverSocket->closeSocket();
-        return SUCCESS;
+        char *response = serverSocket->readMessage();
+        serverSocket->writeMessage((void *) "Ack", 4);
+
+        if (strcmp(response, CONTENT_TYPE_EXECUTE_SUCCESS) == 0) {
+            //retreive results
+            args[0] = serverSocket->readMessage();
+            serverSocket->closeSocket();
+            return SUCCESS;
+
+        } else {
+            serverSocket->closeSocket();
+            return ERROR;
+        }
 
     } else {
-        
-        serverSocket->closeSocket();
-
+        binderSocket->closeSocket();
         return ERROR;
     }
-
 
     return SUCCESS;
 

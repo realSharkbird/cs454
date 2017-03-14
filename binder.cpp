@@ -61,30 +61,30 @@ int main() {
 
         //server registration request
         if(strcmp(type, TYPE_SERVER_BINDER_MESSAGE) == 0){
-            
+
             s->writeMessage((void*)"Ack", 4);
             type = s->readMessage();
-            
+
             DEBUG_MSG("binder received content type: " << type);
-            
+
             if(strcmp(type, CONTENT_TYPE_REGISTER) == 0){
                 s->writeMessage((void*)"Ack", 4);
-                
+
                 Location location;
-                
+
                 location.ip = s->readMessage();
                 s->writeMessage((void*)"Ack", 4);
-                
+
                 location.port = s->readMessage();
                 s->writeMessage((void*)"Ack", 4);
 
                 DEBUG_MSG("got address and port");
-                
+
                 Procedure procedure;
-                
+
                 procedure.name = s->readMessage();
                 s->writeMessage((void*)"Ack", 4);
-                
+
                 procedure.argTypes = (int *)s->readMessage();
                 s->writeMessage((void*)"Ack", 4);
 
@@ -99,25 +99,25 @@ int main() {
                 string str = procedure.name;
                 DEBUG_MSG("registered procedure " << str << " from server");
                 DEBUG_MSG("with ip: " << location.ip << " and port: "<< location.port);
-            }else if(strcmp(type, CONTENT_TYPE_INIT) == 0){
+            } else if(strcmp(type, CONTENT_TYPE_INIT) == 0){
                 s->writeMessage((void*)"Ack", 4);
-                
+
                 Location location;
-                
+
                 location.ip = s->readMessage();
                 s->writeMessage((void*)"Ack", 4);
-                
+
                 location.port = s->readMessage();
                 s->writeMessage((void*)"Ack", 4);
-                
+
                 servers.push(location);
             }
-            
+
         }else if(strcmp(type, TYPE_CLIENT_BINDER_MESSAGE) == 0){
-            
+
             s->writeMessage((void*)"Ack", 4);
             type = s->readMessage();
-            
+
             DEBUG_MSG("binder received content type: " << type);
 
             //location request from client
@@ -132,11 +132,6 @@ int main() {
 
                 int *argTypes = (int *) s->readMessage();
 
-                int i = 0;
-                while (argTypes[i] != 0) {
-                    i++;
-                }
-
                 //create key to find location from database
                 Procedure procedure;
                 procedure.name = name;
@@ -144,39 +139,49 @@ int main() {
 
                 DEBUG_MSG("received name " << name);
                 DEBUG_MSG("received argtype " << argTypes[0]);
-                
+
                 DEBUG_MSG("getting location from database");
 
                 //get location from database
                 //locations stored in a queue for round-robin scheduling, each access moves server to back
-                
+
                 if(database == NULL){
                     DEBUG_MSG("null database");
 
                 }
-                
-                queue<Location> serverLocQueue = database->find(procedure)->second;
-                Location serverLoc = serverLocQueue.front();
-                serverLocQueue.push(serverLoc);
-                serverLocQueue.pop();
-                database->at(procedure) = serverLocQueue;
 
-                DEBUG_MSG("got location from database");
-                
-                char *ip = new char[serverLoc.ip.length()];
-                char *port = new char[serverLoc.port.length()];
-                strcpy(ip, serverLoc.ip.c_str());
-                strcpy(port, serverLoc.port.c_str());
+                if (database->find(procedure) == database->end()) {
+                    s->writeMessage(CONTENT_TYPE_LOC_FAILURE, strlen(CONTENT_TYPE_LOC_FAILURE));
+                } else {
+                    s->writeMessage(CONTENT_TYPE_LOC_SUCCESS, strlen(CONTENT_TYPE_LOC_SUCCESS));
 
-                //send location info to client
-                s->writeMessage(ip, strlen(ip));
-                s->readMessage();
-                s->writeMessage(port, strlen(port));
+                    queue<Location> serverLocQueue = database->find(procedure)->second;
+                    Location serverLoc = serverLocQueue.front();
+                    serverLocQueue.push(serverLoc);
+                    serverLocQueue.pop();
+                    database->at(procedure) = serverLocQueue;
 
-                DEBUG_MSG("Location info sent to client");
-                
+                    DEBUG_MSG("got location from database");
+
+                    char *ip = new char[serverLoc.ip.length()];
+                    char *port = new char[serverLoc.port.length()];
+                    strcpy(ip, serverLoc.ip.c_str());
+                    strcpy(port, serverLoc.port.c_str());
+
+                    //send location info to client
+
+                    s->writeMessage(ip, strlen(ip));
+                    s->readMessage();
+                    s->writeMessage(port, strlen(port));
+
+                    delete[] ip;
+                    delete[] port;
+
+                    DEBUG_MSG("Location info sent to client");
+                }
+
             }else if(strcmp(type, CONTENT_TYPE_TERMINATE) == 0){
-                
+
                 int numServers = servers.size();
                 for(int i = 0; i < numServers; i++){
                     Location server = servers.front();
@@ -187,6 +192,7 @@ int main() {
                     serverSocket->readMessage();
                     servers.pop();
 
+                    serverSocket->closeSocket();
                 }
                 
                 s->closeSocket();

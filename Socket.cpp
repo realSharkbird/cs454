@@ -40,8 +40,7 @@ Socket::Socket(){
     
     //print out server and port numbers
     if (getsockname(socketDescriptor, (struct sockaddr *)&server_address, &serverLen) < 0){
-        cout << "failed to get hostname with errno: " << endl;
-        exit(1);
+        exit(ERROR_SOCKET_CREATION_FAILED);
     }
 }
 
@@ -59,9 +58,8 @@ Socket::Socket(string address, string port) {
     if (newSocketDescriptor < 0)
         cout << "error opening socket" << endl;
     server = gethostbyname(address.c_str());
-    if (server == NULL) {
-        cout << "error, host doesnt exist" << endl;
-        exit(0);
+    if (server == NULL || portNum == 0) {
+        exit(ERROR_SOCKET_CREATION_FAILED);
     }
 
     server_address.sin_family = AF_INET;

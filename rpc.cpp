@@ -244,6 +244,10 @@ int rpcInit(){
     //tell binder that server exists
     char* BINDER_ADDRESS = getenv("BINDER_ADDRESS");
     char* BINDER_PORT = getenv("BINDER_PORT");
+    if (BINDER_ADDRESS == NULL || BINDER_PORT == NULL) {
+        return ERROR_BINDER_NOT_SET;
+    }
+
     binderSocket = new Socket(BINDER_ADDRESS, BINDER_PORT);
     binderSocket->writeMessage(TYPE_SERVER_BINDER_MESSAGE, strlen(TYPE_SERVER_BINDER_MESSAGE));
     binderSocket->readMessage();
@@ -273,6 +277,10 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
     
     char* BINDER_ADDRESS = getenv("BINDER_ADDRESS");
     char* BINDER_PORT = getenv("BINDER_PORT");
+
+    if (BINDER_ADDRESS == NULL || BINDER_PORT == NULL) {
+        return ERROR_BINDER_NOT_SET;
+    }
     
     //create socket
     binderSocket = new Socket(BINDER_ADDRESS, BINDER_PORT);
@@ -421,6 +429,10 @@ int rpcCall(char* name, int* argTypes, void** args){
     char* BINDER_ADDRESS = getenv("BINDER_ADDRESS");
     char* BINDER_PORT = getenv("BINDER_PORT");
 
+    if (BINDER_ADDRESS == NULL || BINDER_PORT == NULL) {
+        return ERROR_BINDER_NOT_SET;
+    }
+
     //send a location request message to the binder to locate the server for the procedure
     binderSocket = new Socket(BINDER_ADDRESS, BINDER_PORT);
     binderSocket->writeMessage(TYPE_CLIENT_BINDER_MESSAGE, strlen(TYPE_CLIENT_BINDER_MESSAGE));
@@ -476,9 +488,6 @@ int rpcCall(char* name, int* argTypes, void** args){
         binderSocket->closeSocket();
         return ERROR;
     }
-
-    return SUCCESS;
-
     
 };
 
@@ -494,6 +503,10 @@ int rpcTerminate(){
     
     char* BINDER_ADDRESS = getenv("BINDER_ADDRESS");
     char* BINDER_PORT = getenv("BINDER_PORT");
+
+    if (BINDER_ADDRESS == NULL || BINDER_PORT == NULL) {
+        return ERROR_BINDER_NOT_SET;
+    }
     
     //send request to the binder
     binderSocket = new Socket(BINDER_ADDRESS, BINDER_PORT);
@@ -504,6 +517,8 @@ int rpcTerminate(){
     binderSocket->writeMessage(CONTENT_TYPE_TERMINATE, strlen(CONTENT_TYPE_TERMINATE));
     
     binderSocket->closeSocket();
+
+    delete binderSocket;
     
     //servers authenticate request by checking binder ip address
     

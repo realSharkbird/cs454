@@ -12,6 +12,8 @@ extern char* TYPE_TERMINATE_MESSAGE;
 
 //types of message content
 extern char* CONTENT_TYPE_REGISTER;
+extern char* CONTENT_TYPE_REGISTER_SUCCESS;
+extern char* CONTENT_TYPE_REGISTER_FAILURE;
 extern char* CONTENT_TYPE_LOC_REQUEST;
 extern char* CONTENT_TYPE_LOC_SUCCESS;
 extern char* CONTENT_TYPE_LOC_FAILURE;
@@ -20,6 +22,9 @@ extern char* CONTENT_TYPE_EXECUTE_SUCCESS;
 extern char* CONTENT_TYPE_EXECUTE_FAILURE;
 extern char* CONTENT_TYPE_TERMINATE;
 extern char* CONTENT_TYPE_INIT;
+
+extern int ERROR_BINDER_NOT_SET;
+extern int ERROR_SOCKET_CREATION_FAILED;
 
 //this is here to make debugging easier so we can switch debug messages on/off
 //we will turn this off before submitting

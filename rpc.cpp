@@ -258,6 +258,7 @@ int rpcInit(){
     binderSocket->writeMessage(clientSocket->getLocationPort(), strlen(clientSocket->getLocationPort()));
     binderSocket->readMessage();
     binderSocket->closeSocket();
+    delete binderSocket;
     
     //init local database
     localDatabase = new std::map<skeleton, Location*>();
@@ -307,6 +308,7 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
     s->readMessage();
 
     s->closeSocket();
+    delete s;
     
     //Make an entry in a local database, associating the server skeleton with the name and list of argument types.
     Location* location = new Location();
@@ -410,6 +412,7 @@ int rpcExecute(){
                 
                 clientSocket->writeMessage((void*)"Ack", 4);
                 clientSocket->closeSocket();
+                delete clientSocket;
                 
                 return SUCCESS;
                 
@@ -417,7 +420,7 @@ int rpcExecute(){
             
         }
     }
-    
+
     return SUCCESS;
 };
 
@@ -477,16 +480,19 @@ int rpcCall(char* name, int* argTypes, void** args){
             //retreive results
             args[0] = serverSocket->readMessage();
             serverSocket->closeSocket();
+            delete serverSocket;
             return SUCCESS;
 
         } else {
             serverSocket->closeSocket();
-            return ERROR;
+            delete serverSocket;
+            return ERROR_EXECUTE_FAILURE;
         }
 
     } else {
         binderSocket->closeSocket();
-        return ERROR;
+        delete binderSocket;
+        return ERROR_LOC_NOT_FOUND;
     }
     
 };

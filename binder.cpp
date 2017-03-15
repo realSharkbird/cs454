@@ -147,7 +147,7 @@ int main() {
 
                 if(database == NULL){
                     DEBUG_MSG("null database");
-
+                    return ERROR_LOC_DATABASE_NULL;
                 }
 
                 if (database->find(procedure) == database->end()) {
@@ -193,9 +193,11 @@ int main() {
                     servers.pop();
 
                     serverSocket->closeSocket();
+                    delete serverSocket;
                 }
                 
                 s->closeSocket();
+                delete s;
                 return 0;
             }
             

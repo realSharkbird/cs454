@@ -25,6 +25,13 @@ extern char* CONTENT_TYPE_INIT;
 
 extern int ERROR_BINDER_NOT_SET;
 extern int ERROR_SOCKET_CREATION_FAILED;
+extern int ERROR_LOC_DATABASE_NULL;
+extern int ERROR_LOC_NOT_FOUND;
+extern int ERROR_EXECUTE_FAILURE;
+extern int ERROR_SOCKET_READ_FAILED;
+extern int ERROR_SOCKET_WRITE_FAILED;
+extern int ERROR_SOCKET_ACCEPT_FAILED;
+extern int ERROR_SOCKET_CONNECT_FAILED;
 
 //this is here to make debugging easier so we can switch debug messages on/off
 //we will turn this off before submitting

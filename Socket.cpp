@@ -27,14 +27,14 @@ Socket::Socket(){
     bzero((char *) &server_address, sizeof(server_address));
     socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
     if (socketDescriptor < 0)
-        cout << "error opening socket" << endl;
+        exit(ERROR_SOCKET_CREATION_FAILED);
     server_address.sin_family = AF_INET;
     server_address.sin_addr.s_addr = INADDR_ANY;
     server_address.sin_port = htons(DEFAULT_PORT);
 
     if (::bind(socketDescriptor, (struct sockaddr *) &server_address,
                sizeof(server_address)) < 0)
-        cout << "error on binding" << endl;
+        exit(ERROR_SOCKET_CREATION_FAILED);
     listen(socketDescriptor,MULTIPLEX);
     serverLen = sizeof(server_address);
     
@@ -56,7 +56,7 @@ Socket::Socket(string address, string port) {
     newSocketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
     portNum = atoi(port.c_str());
     if (newSocketDescriptor < 0)
-        cout << "error opening socket" << endl;
+        exit(ERROR_SOCKET_CREATION_FAILED);
     server = gethostbyname(address.c_str());
     if (server == NULL || portNum == 0) {
         exit(ERROR_SOCKET_CREATION_FAILED);
@@ -68,7 +68,7 @@ Socket::Socket(string address, string port) {
           server->h_length);
     server_address.sin_port = htons(portNum);
     if (connect(newSocketDescriptor,(struct sockaddr *) &server_address,sizeof(server_address)) < 0)
-        cout << "error connecting" << endl;
+        exit(ERROR_SOCKET_CONNECT_FAILED);
 }
 
 //listen for connection
@@ -78,7 +78,7 @@ void Socket::listenForConnection(){
     clientLen = sizeof(client_address);
     newSocketDescriptor = accept(socketDescriptor, (struct sockaddr *) &client_address, &clientLen);
     if (newSocketDescriptor < 0)
-        cout << "error on accept: " << newSocketDescriptor << endl;
+        exit(ERROR_SOCKET_ACCEPT_FAILED);
     
     
 }
@@ -111,7 +111,9 @@ char* Socket::readMessage(){
     //read message
     bzero(buffer, MESSAGE_BUFFER_SIZE);
     n = read(newSocketDescriptor, buffer, MESSAGE_BUFFER_SIZE);
-    if (n < 0) cout << "error reading from socket" << endl;
+    if (n < 0) {
+        exit(ERROR_SOCKET_READ_FAILED);
+    }
     
     return buffer;
 }
@@ -122,8 +124,7 @@ void Socket::writeMessage(void* message, int length){
     //send message to location
     n = write(newSocketDescriptor,message,length);
     if (n < 0){
-        cout << "error writing to socket: " << n << endl;
-        exit(1);
+        exit(ERROR_SOCKET_WRITE_FAILED);
     }
     
 }

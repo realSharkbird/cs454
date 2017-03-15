@@ -10,7 +10,6 @@
 #include <string>
 #include <netdb.h>
 #include <queue>
-#include <thread>
 #include "Socket.h"
 #include "utils.h"
 #include <map>

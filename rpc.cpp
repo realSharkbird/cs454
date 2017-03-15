@@ -305,8 +305,7 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
     location->ip = SERVER_ADDRESS;
     location->port = SERVER_PORT;
     localDatabase->insert( pair<skeleton,Location*>(f, location) );
-    delete location;
-    
+
     return SUCCESS;
 };
 

@@ -27,7 +27,7 @@ Socket * binderSocket;
 Socket * clientSocket;
 Socket * serverSocket;
 
-std::map<skeleton, Location*>* localDatabase;
+std::map<Procedure, skeleton>* localDatabase;
 
 //methods for dealing with args
 int getArgIO(int argType){
@@ -259,7 +259,7 @@ int rpcInit(){
     delete binderSocket;
     
     //init local database
-    localDatabase = new std::map<skeleton, Location*>();
+    localDatabase = new std::map<Procedure, skeleton>();
     
     return SUCCESS;
 };
@@ -309,10 +309,11 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
     delete s;
     
     //Make an entry in a local database, associating the server skeleton with the name and list of argument types.
-    Location* location = new Location();
-    location->ip = SERVER_ADDRESS;
-    location->port = SERVER_PORT;
-    localDatabase->insert( pair<skeleton,Location*>(f, location) );
+    Procedure procedure;
+    
+    procedure.name = name;
+    procedure.argTypes = argTypes;
+    localDatabase->insert( pair<Procedure, skeleton>(procedure, f) );
 
     return SUCCESS;
 };
@@ -346,44 +347,23 @@ int rpcExecute(){
                 
                 int returnSize = 0;
                 
-                /*if(strcmp(name, "f0") == 0){
-                    result = f0_Skel(argTypes, args);
-                    
-                    //return is a single arg of type int
-                    returnSize = sizeof(int);
-                    
-                }else if(strcmp(name, "f1") == 0){
-                    result = f1_Skel(argTypes, args);
-                    
-                    //return is a single arg of type long
-                    returnSize = sizeof(long);
-                    
-                }else if(strcmp(name, "f2") == 0){
-                    result = f2_Skel(argTypes, args);
-                    
-                    //return is a single arg of type string
-                    returnSize = strlen((char*)(args[0]));
-                    
-                }else if(strcmp(name, "f3") == 0){
-                    result = f3_Skel(argTypes, args);
-                    
-                    //return is a single arg of type long array
-                    returnSize = sizeof(long) * getArgLength(argTypes[0]);
-                    
-                }else if(strcmp(name, "f4") == 0){
-                    result = f4_Skel(argTypes, args);
-                    
-                    //not actually supposed to return a value
-
-                }*/
+                Procedure procedure;
+                procedure.name = name;
+                procedure.argTypes = argTypes;
+                
+                skeleton f = localDatabase->find(procedure)->second;
+                result = f(argTypes, args);
                 
                 if (result == 0) {
                     //Send back procedure success
                     clientSocket->writeMessage(CONTENT_TYPE_EXECUTE_SUCCESS, strlen(CONTENT_TYPE_EXECUTE_SUCCESS));
                     clientSocket->readMessage();
 
-                    clientSocket->writeMessage(args[0], returnSize);
-                    clientSocket->readMessage();
+                    //send back results
+                    writeArgs(clientSocket, argTypes, args);
+                    
+                    //clientSocket->writeMessage(args[0], returnSize);
+                    //clientSocket->readMessage();
 
                 } else {
                     
@@ -476,8 +456,22 @@ int rpcCall(char* name, int* argTypes, void** args){
 
         if (strcmp(response, CONTENT_TYPE_EXECUTE_SUCCESS) == 0) {
             //retreive results
-            args[0] = serverSocket->readMessage();
-            serverSocket->closeSocket();
+            //args[0] = serverSocket->readMessage();
+            //serverSocket->closeSocket();
+            
+            int* argTypesTemp;
+            void** argsTemp;
+            //retreive results
+            readArgs(serverSocket, &argTypesTemp, &argsTemp);
+            
+            //copy over...
+            for(int i = 0; i < length; i++){
+                argTypes[i] = argTypesTemp[i];
+            }
+            for(int i = 0; i < length - 1; i++){ 
+                args[i] = argsTemp[i]; 
+            }
+            
             delete serverSocket;
             return SUCCESS;
 

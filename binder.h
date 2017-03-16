@@ -12,6 +12,7 @@ public:
 class Location {
     
 public:
+    bool operator<(const Location rhs) const;
     std::string ip;
     std::string port;
 };

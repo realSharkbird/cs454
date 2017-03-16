@@ -11,12 +11,15 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <string.h>
+#include <string>
+#include <cstring>
 #include <map>
 #include <iostream>
 #include <cassert>
 #include <netdb.h>
 #include "Socket.h"
 #include "utils.h"
+#include <sstream>
 
 using namespace std;
 

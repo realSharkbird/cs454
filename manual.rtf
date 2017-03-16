@@ -1,0 +1,55 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1187\cocoasubrtf400
+{\fonttbl\f0\fswiss\fcharset0 ArialMT;\f1\froman\fcharset0 Times-Roman;}
+{\colortbl;\red255\green255\blue255;}
+\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\deftab720
+\pard\pardeftab720\sl400
+
+\f0\b\fs30 \cf0 \ul \ulc0 Structure of binder database / Round-robin scheduling:
+\f1\b0\fs24 \ulnone \
+\pard\pardeftab720\sl400
+
+\f0\fs30 \cf0 All data is stored in a map where keys are procedures and values are server locations stored in a queue. When a procedure is called, the corresponding queue is found and the server location at the front of that queue is popped and pushed to the very end of the data structure. Thus achieving simple round-robin scheduling.
+\f1\fs24 \
+\pard\pardeftab720
+\cf0 \
+\pard\pardeftab720\sl400
+
+\f0\b\fs30 \cf0 \ul \ulc0 Function Overloading:
+\f1\b0\fs24 \ulnone \
+\pard\pardeftab720\sl400
+
+\f0\fs30 \cf0 All procedures are stored in a map which allows for function overloading. Functions with similar names but different arguments are stored as 2 separate functions. This is achieved by overriding the less operator in the Procedure class, which is used as the keys for the database. When comparing 2 procedures, the less operator function takes each Procedure\'92s name concatenated with its argtypes and alphabetically compares them. This means that 2 procedures with differing argtypes can exist separately and selectively called when needed.
+\f1\fs24 \
+\pard\pardeftab720
+\cf0 \
+\pard\pardeftab720\sl400
+
+\f0\b\fs30 \cf0 \ul \ulc0 Termination procedure:
+\f1\b0\fs24 \ulnone \
+\pard\pardeftab720\sl400
+
+\f0\fs30 \cf0 When the client calls terminate, it sends a client-binder message to the binder, then a terminate message to let it know that it wishes for it to execute the terminate procedure. The binder then goes through a list of server locations (stored in a queue) built from every rpcInit called by each server and through protocol sends them request messages. Once all the request are sent, the binder closes all it's remaining sockets and finishes execution. All the servers check the ip of the binder before doing the same.
+\f1\fs24 \
+\pard\pardeftab720
+\cf0 \
+\pard\pardeftab720\sl400
+
+\f0\b\fs30 \cf0 \ul \ulc0 Marshalling/Unmarshalling of data:
+\f1\b0\fs24 \ulnone \
+\pard\pardeftab720
+\cf0 \
+\pard\pardeftab720\sl400
+
+\f0\fs30 \cf0 When rpcCall is called, the argTypes array is sent to the server so that it knows how to interpret subsequent data. Each element of the argTypes array is then analyzed to determine the transfer protocol from client to server. The input/output bit, type name, and argument length of each argType element is unmarshalled and stored into an int. Once this metadata is extracted, the client begins marshaling the parameters. The client uses the length of each argument and sends them one by one.
+\f1\fs24 \
+\pard\pardeftab720
+\cf0 \
+\pard\pardeftab720\sl400
+
+\f0\fs30 \cf0 The server then receives the arguments according to protocol and marshals them into the server skeletons which is obtain through the local database modelled by a map structure. The result is returned within the inserted args array. The server then simply marshals the results to the client according to protocol.
+\f1\fs24 \
+\pard\pardeftab720
+\cf0 \
+\
+}

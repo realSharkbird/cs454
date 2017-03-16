@@ -16,7 +16,6 @@
 #include <cassert>
 #include <cstring>
 #include "binder.h"
-#include "server_function_skels.h"
 
 const static int SUCCESS = 0;
 const static int ERROR = -1;
@@ -347,7 +346,7 @@ int rpcExecute(){
                 
                 int returnSize = 0;
                 
-                if(strcmp(name, "f0") == 0){
+                /*if(strcmp(name, "f0") == 0){
                     result = f0_Skel(argTypes, args);
                     
                     //return is a single arg of type int
@@ -376,7 +375,7 @@ int rpcExecute(){
                     
                     //not actually supposed to return a value
 
-                }
+                }*/
                 
                 if (result == 0) {
                     //Send back procedure success

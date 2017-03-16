@@ -465,10 +465,10 @@ int rpcCall(char* name, int* argTypes, void** args){
             readArgs(serverSocket, &argTypesTemp, &argsTemp);
             
             //copy over...
-            for(int i = 0; i < length; i++){
+            for(int i = 0; i < length + 1; i++){
                 argTypes[i] = argTypesTemp[i];
             }
-            for(int i = 0; i < length - 1; i++){ 
+            for(int i = 0; i < length; i++){
                 args[i] = argsTemp[i]; 
             }
             

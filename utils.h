@@ -42,3 +42,19 @@ extern int ERROR_SOCKET_CONNECT_FAILED;
 #else
 #define DEBUG_MSG(str) do { } while ( false )
 #endif
+
+class Procedure {
+    
+public:
+    bool operator<(const Procedure rhs) const;
+    char * name;
+    int * argTypes;
+};
+
+class Location {
+    
+public:
+    bool operator<(const Location rhs) const;
+    std::string ip;
+    std::string port;
+};

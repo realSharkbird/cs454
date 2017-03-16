@@ -23,33 +23,6 @@ std::map<Procedure, std::queue<Location>>* database;
 //list of connected servers
 std::queue<Location> servers;
 
-//we need this tedious code to make the database work
-bool Procedure::operator<(const Procedure right) const{
-    
-    if(strcmp(name, right.name) == 0){
-        
-        bool result = (strcmp((char*)argTypes, (char*)right.argTypes) < 0);
-        
-        return result;
-        
-    }
-    
-    bool result = (strcmp(name, right.name) < 0);
-
-    return result;
-
-}
-//we need this tedious code to make the database work
-bool Location::operator<(const Location right) const{
-    
-    string l1 = port + ip;
-    string l2 = right.port + right.ip;
-    bool result = (strcmp(l1.c_str(), l2.c_str()) < 0);
-    
-    return result;
-    
-}
-
 //This binder is the first thing to run
 int main() {
 

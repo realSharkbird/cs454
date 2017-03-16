@@ -35,6 +35,7 @@ int ERROR_SOCKET_READ_FAILED = -6;
 int ERROR_SOCKET_WRITE_FAILED = -7;
 int ERROR_SOCKET_ACCEPT_FAILED = -8;
 int ERROR_SOCKET_CONNECT_FAILED = -9;
+int ERROR_SKELETON_NOT_FOUND = -10;
 
 //we need this tedious code to make the database work
 bool Procedure::operator<(const Procedure right) const{

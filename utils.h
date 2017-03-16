@@ -32,6 +32,7 @@ extern int ERROR_SOCKET_READ_FAILED;
 extern int ERROR_SOCKET_WRITE_FAILED;
 extern int ERROR_SOCKET_ACCEPT_FAILED;
 extern int ERROR_SOCKET_CONNECT_FAILED;
+extern int ERROR_SKELETON_NOT_FOUND;
 
 //this is here to make debugging easier so we can switch debug messages on/off
 //we will turn this off before submitting

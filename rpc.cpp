@@ -15,7 +15,6 @@
 #include <map>
 #include <cassert>
 #include <cstring>
-#include "binder.h"
 
 const static int SUCCESS = 0;
 const static int ERROR = -1;
@@ -350,7 +349,11 @@ int rpcExecute(){
                 Procedure procedure;
                 procedure.name = name;
                 procedure.argTypes = argTypes;
-                
+
+                if (localDatabase->find(procedure) == localDatabase->end()) {
+                    return ERROR_SKELETON_NOT_FOUND;
+                }
+
                 skeleton f = localDatabase->find(procedure)->second;
                 result = f(argTypes, args);
                 
